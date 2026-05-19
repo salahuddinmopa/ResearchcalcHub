@@ -7,30 +7,34 @@ type SubmitState = 'idle' | 'loading' | 'success' | 'error';
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const recipientEmail = 'recalhub@gmail.com';
-const fallbackEmailEndpoint = `https://formsubmit.co/ajax/${recipientEmail}`;
 
-function submissionEndpoint(kind: 'error' | 'suggest') {
-  const configuredEndpoint = kind === 'error'
-    ? import.meta.env.VITE_FORMSPREE_ERROR_ENDPOINT
-    : import.meta.env.VITE_FORMSPREE_SUGGEST_ENDPOINT;
-
-  return configuredEndpoint || fallbackEmailEndpoint;
+interface EmailPayload {
+  type: 'contact' | 'error' | 'suggestion';
+  subject: string;
+  replyTo: string;
+  fields: Record<string, string>;
 }
 
-async function submitForm(endpoint: string, formData: FormData) {
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    body: formData,
-    headers: { Accept: 'application/json' },
-  });
+async function submitForm(payload: EmailPayload) {
+  let response: Response;
+  try {
+    response = await fetch('/api/contact', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+    });
+  } catch {
+    throw new Error('Network error. The contact API could not be reached. Please try again after redeploying or check the Vercel function logs.');
+  }
 
-  if (!response.ok) {
-    const payload = await response.json().catch(() => null);
-    const message = payload?.errors?.[0]?.message || payload?.message || 'Submission failed. Please try again.';
-    throw new Error(message);
+  const result = await response.json().catch(() => null);
+  if (!response.ok || !result?.success) {
+    throw new Error(result?.error || 'Submission failed. Please try again.');
   }
 }
-
 function PageShell({
   title,
   subtitle,
@@ -124,11 +128,10 @@ function StatusMessage({ status, message }: { status: SubmitState; message: stri
   );
 }
 
-function EndpointNotice({ configured, label }: { configured: boolean; label: string }) {
-  if (configured) return null;
+function EmailNotice() {
   return (
     <div className="mb-5 rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
-      This form sends to {recipientEmail}. For production-grade delivery, add <code className="font-mono">{label}</code> with a Formspree endpoint; otherwise the built-in email fallback will be used.
+      This form sends to {recipientEmail} through the site&apos;s secure Vercel email API.
     </div>
   );
 }
@@ -140,8 +143,33 @@ function ContactForm() {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setStatus('error');
-    setStatusMessage('Contact email delivery is not configured for this form yet. Please use Report an Error or Suggest a Calculator for routed submissions.');
+    if (!values.name.trim()) return setStatusMessage('Name is required.'), setStatus('error');
+    if (!emailPattern.test(values.email)) return setStatusMessage('Enter a valid email address.'), setStatus('error');
+    if (!values.subject.trim()) return setStatusMessage('Subject is required.'), setStatus('error');
+    if (!values.message.trim()) return setStatusMessage('Message is required.'), setStatus('error');
+
+    const submittedAt = new Date().toLocaleString();
+    try {
+      setStatus('loading');
+      await submitForm({
+        type: 'contact',
+        subject: `ResearchCalcHub Contact: ${values.subject}`,
+        replyTo: values.email,
+        fields: {
+          Name: values.name,
+          Email: values.email,
+          Subject: values.subject,
+          Message: values.message,
+          'Date/time submitted': submittedAt,
+        },
+      });
+      setStatus('success');
+      setStatusMessage('Thank you. Your message has been submitted successfully.');
+      setValues({ name: '', email: '', subject: '', message: '' });
+    } catch (error) {
+      setStatus('error');
+      setStatusMessage(error instanceof Error ? error.message : 'Submission failed. Please try again.');
+    }
   };
 
   return (
@@ -156,15 +184,16 @@ function ContactForm() {
       <div className="mt-4">
         <FormField label="Message" name="contact_message" textarea value={values.message} onChange={message => setValues(current => ({ ...current, message }))} placeholder="Write your message here." required />
       </div>
-      <button type="submit" className="btn-primary mt-5">Submit</button>
+      <button type="submit" disabled={status === 'loading'} className="btn-primary mt-5 inline-flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed">
+        {status === 'loading' && <Loader2 className="w-4 h-4 animate-spin" />}
+        {status === 'loading' ? 'Submitting...' : 'Submit'}
+      </button>
       <StatusMessage status={status} message={statusMessage} />
     </form>
   );
 }
 
 export function ErrorReportForm() {
-  const configuredEndpoint = Boolean(import.meta.env.VITE_FORMSPREE_ERROR_ENDPOINT);
-  const endpoint = submissionEndpoint('error');
   const [values, setValues] = useState({
     name: '',
     email: '',
@@ -189,35 +218,20 @@ export function ErrorReportForm() {
     if (!values.errorDetails.trim()) return setStatusMessage('Error details are required.'), setStatus('error');
     const submittedAt = new Date().toLocaleString();
     const subject = `ResearchCalcHub Error Report: ${values.calculatorPage}`;
-    const body = [
-      `Name: ${values.name}`,
-      `Email: ${values.email}`,
-      `Calculator/Page: ${values.calculatorPage}`,
-      `Problem Type: ${values.problemType}`,
-      `Error Details: ${values.errorDetails}`,
-      `Expected Correct Result: ${values.expectedResult || 'Not provided'}`,
-      `Date/time submitted: ${submittedAt}`,
-    ].join('\n');
-
-    const formData = new FormData();
-    formData.append('_subject', subject);
-    formData.append('_captcha', 'false');
-    formData.append('_template', 'table');
-    formData.append('_replyto', values.email);
-    formData.append('message_type', 'Error Report');
-    formData.append('name', values.name);
-    formData.append('email', values.email);
-    formData.append('calculator_or_page', values.calculatorPage);
-    formData.append('problem_type', values.problemType);
-    formData.append('error_details', values.errorDetails);
-    formData.append('expected_correct_result', values.expectedResult || 'Not provided');
-    formData.append('submitted_at', submittedAt);
-    formData.append('message', body);
-    if (screenshot) formData.append('screenshot', screenshot);
+    const fields = {
+      Name: values.name,
+      Email: values.email,
+      'Calculator/Page': values.calculatorPage,
+      'Problem Type': values.problemType,
+      'Error Details': values.errorDetails,
+      'Expected Correct Result': values.expectedResult || 'Not provided',
+      'Screenshot File': screenshot?.name || 'Not provided',
+      'Date/time submitted': submittedAt,
+    };
 
     try {
       setStatus('loading');
-      await submitForm(endpoint, formData);
+      await submitForm({ type: 'error', subject, replyTo: values.email, fields });
       setStatus('success');
       setStatusMessage('Thank you. Your error report has been submitted successfully.');
       setValues({ name: '', email: '', calculatorPage: '', problemType: 'Wrong calculation', errorDetails: '', expectedResult: '' });
@@ -231,7 +245,7 @@ export function ErrorReportForm() {
 
   return (
     <form onSubmit={handleSubmit} className="card">
-      <EndpointNotice configured={configuredEndpoint} label="VITE_FORMSPREE_ERROR_ENDPOINT" />
+      <EmailNotice />
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <FormField label="Name" name="error_name" value={values.name} onChange={value => update('name', value)} placeholder="Your name" required />
         <FormField label="Email" name="error_email" type="email" value={values.email} onChange={value => update('email', value)} placeholder="you@example.com" required />
@@ -267,8 +281,6 @@ export function ErrorReportForm() {
 }
 
 export function CalculatorSuggestionForm() {
-  const configuredEndpoint = Boolean(import.meta.env.VITE_FORMSPREE_SUGGEST_ENDPOINT);
-  const endpoint = submissionEndpoint('suggest');
   const [values, setValues] = useState({
     name: '',
     email: '',
@@ -293,36 +305,20 @@ export function CalculatorSuggestionForm() {
     if (!values.usefulness.trim()) return setStatusMessage('Please explain why this calculator is useful.'), setStatus('error');
     const submittedAt = new Date().toLocaleString();
     const subject = `ResearchCalcHub New Calculator Suggestion: ${values.calculatorName}`;
-    const body = [
-      `Name: ${values.name}`,
-      `Email: ${values.email}`,
-      `Suggested Calculator Name: ${values.calculatorName}`,
-      `Category: ${values.category}`,
-      `Why it is useful: ${values.usefulness}`,
-      `Formula or method: ${values.formula || 'Not provided'}`,
-      `Example calculation: ${values.example || 'Not provided'}`,
-      `Date/time submitted: ${submittedAt}`,
-    ].join('\n');
-
-    const formData = new FormData();
-    formData.append('_subject', subject);
-    formData.append('_captcha', 'false');
-    formData.append('_template', 'table');
-    formData.append('_replyto', values.email);
-    formData.append('message_type', 'Calculator Suggestion');
-    formData.append('name', values.name);
-    formData.append('email', values.email);
-    formData.append('suggested_calculator_name', values.calculatorName);
-    formData.append('category', values.category);
-    formData.append('why_useful', values.usefulness);
-    formData.append('formula_or_method', values.formula || 'Not provided');
-    formData.append('example_calculation', values.example || 'Not provided');
-    formData.append('submitted_at', submittedAt);
-    formData.append('message', body);
+    const fields = {
+      Name: values.name,
+      Email: values.email,
+      'Suggested Calculator Name': values.calculatorName,
+      Category: values.category,
+      'Why it is useful': values.usefulness,
+      'Formula or method': values.formula || 'Not provided',
+      'Example calculation': values.example || 'Not provided',
+      'Date/time submitted': submittedAt,
+    };
 
     try {
       setStatus('loading');
-      await submitForm(endpoint, formData);
+      await submitForm({ type: 'suggestion', subject, replyTo: values.email, fields });
       setStatus('success');
       setStatusMessage('Thank you. Your calculator suggestion has been submitted successfully.');
       setValues({ name: '', email: '', calculatorName: '', category: 'Research Methodology', usefulness: '', formula: '', example: '' });
@@ -334,7 +330,7 @@ export function CalculatorSuggestionForm() {
 
   return (
     <form onSubmit={handleSubmit} className="card">
-      <EndpointNotice configured={configuredEndpoint} label="VITE_FORMSPREE_SUGGEST_ENDPOINT" />
+      <EmailNotice />
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <FormField label="Name" name="suggest_name" value={values.name} onChange={value => update('name', value)} placeholder="Your name" required />
         <FormField label="Email" name="suggest_email" type="email" value={values.email} onChange={value => update('email', value)} placeholder="you@example.com" required />

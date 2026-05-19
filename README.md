@@ -36,6 +36,29 @@ http://127.0.0.1:5173/
 npm run build
 ```
 
+## Contact Forms On Vercel
+
+Report Error, Suggest Calculator, and Contact submit to the Vercel serverless route:
+
+```text
+/api/contact
+```
+
+The frontend must not call Resend directly. Add these Vercel environment variables:
+
+```env
+RESEND_API_KEY=your_resend_api_key
+CONTACT_EMAIL=recalhub@gmail.com
+```
+
+For local testing of Vercel serverless functions, install/use the Vercel CLI and run:
+
+```bash
+vercel dev
+```
+
+Then test `/report-error`, `/suggest-calculator`, and `/contact` through the Vercel dev URL.
+
 ## Accuracy Checks
 
 Run representative formula checks:
