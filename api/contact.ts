@@ -50,6 +50,19 @@ function renderEmail(payload: Required<ContactPayload>) {
   `;
 }
 
+function formatProviderError(status: number, statusText: string, providerError: unknown) {
+  const providerMessage = typeof providerError === 'object' && providerError !== null && 'message' in providerError
+    ? String((providerError as { message?: unknown }).message)
+    : '';
+  const providerDetails = providerError
+    ? JSON.stringify(providerError)
+    : statusText;
+
+  return providerMessage
+    ? `Resend error ${status}: ${providerMessage}. Details: ${providerDetails}`
+    : `Resend error ${status}: ${providerDetails}`;
+}
+
 function validatePayload(payload: ContactPayload) {
   if (!payload.type || !['contact', 'error', 'suggestion'].includes(payload.type)) {
     return 'Message type is missing or invalid.';
@@ -115,10 +128,11 @@ export default async function handler(request: any, response: any) {
 
     if (!resendResponse.ok) {
       const providerError = await resendResponse.json().catch(() => null);
-      console.error('[contact] Resend error:', providerError || resendResponse.statusText);
+      const errorMessage = formatProviderError(resendResponse.status, resendResponse.statusText, providerError);
+      console.error('[contact] Resend error:', errorMessage);
       return json(response, 502, {
         success: false,
-        error: providerError?.message || 'Email provider rejected the message.',
+        error: errorMessage,
       });
     }
 
