@@ -6,14 +6,18 @@ import { useSEO } from '../utils/seo';
 type SubmitState = 'idle' | 'loading' | 'success' | 'error';
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const recipientEmail = 'recalhub@gmail.com';
+const fallbackEmailEndpoint = `https://formsubmit.co/ajax/${recipientEmail}`;
 
-function formspreeEndpoint(kind: 'error' | 'suggest') {
-  return kind === 'error'
+function submissionEndpoint(kind: 'error' | 'suggest') {
+  const configuredEndpoint = kind === 'error'
     ? import.meta.env.VITE_FORMSPREE_ERROR_ENDPOINT
     : import.meta.env.VITE_FORMSPREE_SUGGEST_ENDPOINT;
+
+  return configuredEndpoint || fallbackEmailEndpoint;
 }
 
-async function submitToFormspree(endpoint: string, formData: FormData) {
+async function submitForm(endpoint: string, formData: FormData) {
   const response = await fetch(endpoint, {
     method: 'POST',
     body: formData,
@@ -22,7 +26,7 @@ async function submitToFormspree(endpoint: string, formData: FormData) {
 
   if (!response.ok) {
     const payload = await response.json().catch(() => null);
-    const message = payload?.errors?.[0]?.message || 'Submission failed. Please try again.';
+    const message = payload?.errors?.[0]?.message || payload?.message || 'Submission failed. Please try again.';
     throw new Error(message);
   }
 }
@@ -120,11 +124,11 @@ function StatusMessage({ status, message }: { status: SubmitState; message: stri
   );
 }
 
-function EndpointNotice({ endpoint, label }: { endpoint: string | undefined; label: string }) {
-  if (endpoint) return null;
+function EndpointNotice({ configured, label }: { configured: boolean; label: string }) {
+  if (configured) return null;
   return (
-    <div className="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-      Email sending is not configured yet. Add <code className="font-mono">{label}</code> to your environment variables with your Formspree endpoint before deploying.
+    <div className="mb-5 rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
+      This form sends to {recipientEmail}. For production-grade delivery, add <code className="font-mono">{label}</code> with a Formspree endpoint; otherwise the built-in email fallback will be used.
     </div>
   );
 }
@@ -159,7 +163,8 @@ function ContactForm() {
 }
 
 export function ErrorReportForm() {
-  const endpoint = formspreeEndpoint('error');
+  const configuredEndpoint = Boolean(import.meta.env.VITE_FORMSPREE_ERROR_ENDPOINT);
+  const endpoint = submissionEndpoint('error');
   const [values, setValues] = useState({
     name: '',
     email: '',
@@ -182,8 +187,6 @@ export function ErrorReportForm() {
     if (!emailPattern.test(values.email)) return setStatusMessage('Enter a valid email address.'), setStatus('error');
     if (!values.calculatorPage.trim()) return setStatusMessage('Calculator name or page URL is required.'), setStatus('error');
     if (!values.errorDetails.trim()) return setStatusMessage('Error details are required.'), setStatus('error');
-    if (!endpoint) return setStatusMessage('Email sending is not configured yet. Add VITE_FORMSPREE_ERROR_ENDPOINT to your environment variables.'), setStatus('error');
-
     const submittedAt = new Date().toLocaleString();
     const subject = `ResearchCalcHub Error Report: ${values.calculatorPage}`;
     const body = [
@@ -198,6 +201,9 @@ export function ErrorReportForm() {
 
     const formData = new FormData();
     formData.append('_subject', subject);
+    formData.append('_captcha', 'false');
+    formData.append('_template', 'table');
+    formData.append('_replyto', values.email);
     formData.append('message_type', 'Error Report');
     formData.append('name', values.name);
     formData.append('email', values.email);
@@ -211,7 +217,7 @@ export function ErrorReportForm() {
 
     try {
       setStatus('loading');
-      await submitToFormspree(endpoint, formData);
+      await submitForm(endpoint, formData);
       setStatus('success');
       setStatusMessage('Thank you. Your error report has been submitted successfully.');
       setValues({ name: '', email: '', calculatorPage: '', problemType: 'Wrong calculation', errorDetails: '', expectedResult: '' });
@@ -225,7 +231,7 @@ export function ErrorReportForm() {
 
   return (
     <form onSubmit={handleSubmit} className="card">
-      <EndpointNotice endpoint={endpoint} label="VITE_FORMSPREE_ERROR_ENDPOINT" />
+      <EndpointNotice configured={configuredEndpoint} label="VITE_FORMSPREE_ERROR_ENDPOINT" />
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <FormField label="Name" name="error_name" value={values.name} onChange={value => update('name', value)} placeholder="Your name" required />
         <FormField label="Email" name="error_email" type="email" value={values.email} onChange={value => update('email', value)} placeholder="you@example.com" required />
@@ -261,7 +267,8 @@ export function ErrorReportForm() {
 }
 
 export function CalculatorSuggestionForm() {
-  const endpoint = formspreeEndpoint('suggest');
+  const configuredEndpoint = Boolean(import.meta.env.VITE_FORMSPREE_SUGGEST_ENDPOINT);
+  const endpoint = submissionEndpoint('suggest');
   const [values, setValues] = useState({
     name: '',
     email: '',
@@ -284,8 +291,6 @@ export function CalculatorSuggestionForm() {
     if (!emailPattern.test(values.email)) return setStatusMessage('Enter a valid email address.'), setStatus('error');
     if (!values.calculatorName.trim()) return setStatusMessage('Suggested calculator name is required.'), setStatus('error');
     if (!values.usefulness.trim()) return setStatusMessage('Please explain why this calculator is useful.'), setStatus('error');
-    if (!endpoint) return setStatusMessage('Email sending is not configured yet. Add VITE_FORMSPREE_SUGGEST_ENDPOINT to your environment variables.'), setStatus('error');
-
     const submittedAt = new Date().toLocaleString();
     const subject = `ResearchCalcHub New Calculator Suggestion: ${values.calculatorName}`;
     const body = [
@@ -301,6 +306,9 @@ export function CalculatorSuggestionForm() {
 
     const formData = new FormData();
     formData.append('_subject', subject);
+    formData.append('_captcha', 'false');
+    formData.append('_template', 'table');
+    formData.append('_replyto', values.email);
     formData.append('message_type', 'Calculator Suggestion');
     formData.append('name', values.name);
     formData.append('email', values.email);
@@ -314,7 +322,7 @@ export function CalculatorSuggestionForm() {
 
     try {
       setStatus('loading');
-      await submitToFormspree(endpoint, formData);
+      await submitForm(endpoint, formData);
       setStatus('success');
       setStatusMessage('Thank you. Your calculator suggestion has been submitted successfully.');
       setValues({ name: '', email: '', calculatorName: '', category: 'Research Methodology', usefulness: '', formula: '', example: '' });
@@ -326,7 +334,7 @@ export function CalculatorSuggestionForm() {
 
   return (
     <form onSubmit={handleSubmit} className="card">
-      <EndpointNotice endpoint={endpoint} label="VITE_FORMSPREE_SUGGEST_ENDPOINT" />
+      <EndpointNotice configured={configuredEndpoint} label="VITE_FORMSPREE_SUGGEST_ENDPOINT" />
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <FormField label="Name" name="suggest_name" value={values.name} onChange={value => update('name', value)} placeholder="Your name" required />
         <FormField label="Email" name="suggest_email" type="email" value={values.email} onChange={value => update('email', value)} placeholder="you@example.com" required />
