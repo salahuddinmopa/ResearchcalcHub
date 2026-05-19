@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, ScrollRestoration } from 'react-router-dom';
+import { BrowserRouter, Link, Routes, Route, ScrollRestoration } from 'react-router-dom';
 import { Navbar } from './components/layout/Navbar';
 import { Footer } from './components/layout/Footer';
 import { HomePage } from './pages/Home';
@@ -60,6 +60,18 @@ function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
+      <div className="bg-amber-50 border-b border-amber-200 px-4 py-2.5 text-sm text-amber-900 print:hidden">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-center gap-1 sm:gap-2 text-center">
+          <span>
+            ResearchCalcHub is currently in beta. Please verify important results before academic or professional use.
+          </span>
+          <span className="hidden sm:inline text-amber-700">·</span>
+          <span>
+            You can <Link to="/report-error" className="font-semibold underline underline-offset-2 hover:text-amber-700">report errors</Link> or{' '}
+            <Link to="/suggest-calculator" className="font-semibold underline underline-offset-2 hover:text-amber-700">suggest new calculators</Link>.
+          </span>
+        </div>
+      </div>
       <main className="flex-1">{children}</main>
       <Footer />
     </div>
