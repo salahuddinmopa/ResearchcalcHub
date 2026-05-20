@@ -1,4 +1,5 @@
-import { BrowserRouter, Link, Routes, Route, ScrollRestoration } from 'react-router-dom';
+import QualitativeThematicAnalysisPage from './pages/calculators/QualitativeThematicAnalysisPage';
+import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { Navbar } from './components/layout/Navbar';
 import { Footer } from './components/layout/Footer';
 import { HomePage } from './pages/Home';
@@ -14,7 +15,7 @@ import {
 } from './pages/InfoPages';
 import { CategoryPage } from './pages/Category';
 import ResearchToolkitPage from './pages/ResearchToolkit';
-import QualitativeThematicAnalysisPage from './pages/tools/QualitativeThematicAnalysis';
+
 import { FutureToolsPage } from './pages/FutureTools';
 import { PlaceholderCalculatorPage } from './pages/PlaceholderCalculator';
 
@@ -114,7 +115,7 @@ export default function App() {
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/privacy" element={<PrivacyPolicyPage />} />
           <Route path="/terms" element={<TermsOfUsePage />} />
-          <Route path="/disclaimer" element={<DisclaimerPage />} />
+          <Route path="/calculators/qualitative-thematic-analysis" element={<QualitativeThematicAnalysisPage />} />
           <Route path="/suggest-calculator" element={<SuggestCalculatorPage />} />
           <Route path="/report-error" element={<ReportErrorPage />} />
 
