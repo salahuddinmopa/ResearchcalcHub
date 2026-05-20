@@ -106,7 +106,7 @@ export default async function handler(request: any, response: any) {
 
     const validPayload = payload as Required<ContactPayload>;
     const to = process.env.CONTACT_EMAIL || 'recalhub@gmail.com';
-    const from = 'ResearchCalcHub <onboarding@resend.dev>';
+    const from = 'ResearchCalcHub <reports@researchcalchub.com>';
 
     const resendResponse = await fetch('https://api.resend.com/emails', {
       method: 'POST',
