@@ -57,9 +57,12 @@ function ScrollToTop() {
   return null;
 }
 
+import { Header } from './components/layout/Header';
+
 function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex flex-col min-h-screen">
+      <Header />
       <Navbar />
       <div className="bg-amber-50 border-b border-amber-200 px-4 py-2.5 text-sm text-amber-900 print:hidden">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-center gap-1 sm:gap-2 text-center">
@@ -76,6 +79,24 @@ function Layout({ children }: { children: React.ReactNode }) {
       <main className="flex-1">{children}</main>
       <Footer />
     </div>
+  );
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   );
 }
 

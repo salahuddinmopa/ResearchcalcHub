@@ -1,0 +1,52 @@
+/* src/styles/theme.css */
+:root {
+  --color-primary-light: hsl(210, 40%, 95%);
+  --color-primary-dark: hsl(210, 30%, 20%);
+  --color-accent-light: hsl(170, 40%, 90%);
+  --color-accent-dark: hsl(170, 30%, 25%);
+  --color-bg-light: #f9fafb;
+  --color-bg-dark: #1a1a1a;
+  --color-text-light: #1f2937;
+  --color-text-dark: #f3f4f6;
+  --radius: 0.75rem;
+}
+
+.light-theme {
+  background-color: var(--color-bg-light);
+  color: var(--color-text-light);
+}
+
+.dark-theme {
+  background-color: var(--color-bg-dark);
+  color: var(--color-text-dark);
+}
+
+/* Card style */
+.card {
+  background-color: var(--color-primary-light);
+  border-radius: var(--radius);
+  padding: 1rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: background-color 0.3s ease;
+}
+
+.dark-theme .card {
+  background-color: var(--color-primary-dark);
+}
+
+/* Micro‑animations */
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Button hover scaling */
+.btn-primary {
+  transition: transform 0.2s ease, background-color 0.3s ease;
+}
+.btn-primary:hover {
+  transform: scale(1.03);
+}
