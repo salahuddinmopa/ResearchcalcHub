@@ -13,7 +13,7 @@ import {
   TermsOfUsePage,
 } from './pages/InfoPages';
 import { CategoryPage } from './pages/Category';
-import { ResearchToolkitPage } from './pages/ResearchToolkit';
+import QualitativeThematicAnalysisPage from './pages/tools/QualitativeThematicAnalysis';
 import { FutureToolsPage } from './pages/FutureTools';
 import { PlaceholderCalculatorPage } from './pages/PlaceholderCalculator';
 
