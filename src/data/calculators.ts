@@ -670,6 +670,27 @@ const calculatorData: CalculatorSeed[] = [
     path: '/calculators/ai-governance-readiness',
     faqs: [],
   },
+  {
+    id: 'qualitative-thematic-analysis',
+    name: 'Qualitative Thematic Analysis Tool',
+    shortName: 'Thematic Analysis',
+    category: 'Research Methodology',
+    categoryId: 'research-methodology',
+    description: 'AI‑assisted thematic analysis for qualitative interview, focus group, and open‑ended survey data.',
+    longDescription: "This tool provides a guided five‑phase workflow for qualitative thematic analysis, helping researchers organize, code, summarize, and interpret textual data. It is an educational support assistant and does NOT replace professional software such as NVivo.",
+    whenToUse: 'Use when you need to conduct systematic thematic analysis of interview transcripts, focus‑group notes, or open‑ended survey responses.',
+    difficulty: 'Intermediate',
+    tags: ['qualitative', 'thematic analysis', 'NVivo', 'coding', 'research'],
+    status: 'active',
+    formula: '',
+    relatedCalculators: ['cohens-kappa', 'fleiss-kappa', 'cronbach-alpha'],
+    userTypes: ['Student', 'Researcher', 'Teacher', 'Professional'],
+    path: '/calculators/qualitative-thematic-analysis',
+    faqs: [
+      { question: 'Does this replace NVivo?', answer: 'No. This is an educational AI‑assisted support tool for thematic analysis, not a full‑featured qualitative data analysis package.' },
+      { question: 'Can I export my coded data?', answer: 'Yes. The tool can export codes and summaries as CSV or PDF for further analysis.' }
+    ]
+  },
 ];
 
 const futureCalculatorData: CalculatorSeed[] = [

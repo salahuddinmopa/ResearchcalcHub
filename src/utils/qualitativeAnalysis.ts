@@ -57,13 +57,32 @@ export function generateInitialCodes(text: string, topN = 10) {
     phraseFreq[phrase] = (phraseFreq[phrase] ?? 0) + 1;
   }
   const entries = Object.entries(phraseFreq)
-    .map(([phrase, count]) => ({
-      codeName: phrase,
+    .map(([phrase, count], idx) => ({
+      name: phrase,
       description: `Frequent phrase: "${phrase}"`,
       frequency: count,
-      exampleQuote: ''
+      quote: '',
+      sourceIdx: idx,
     }))
     .sort((a, b) => b.frequency - a.frequency)
     .slice(0, topN);
   return entries;
+}
+
+/**
+ * Helper for page component: generate word frequencies suitable for UI.
+ * Returns array of objects with `word` and `freq` fields (top N).
+ */
+export function generateWordFrequencies(text: string, topN = 20) {
+  const all = getWordFrequencies(text);
+  return all.slice(0, topN).map(item => ({ word: item.word, freq: item.count }));
+}
+
+/**
+ * Simple summarization: return the first `maxWords` words of the text.
+ */
+export function summarizeText(text: string, maxWords = 150) {
+  const words = text.split(/\s+/);
+  if (words.length <= maxWords) return text.trim();
+  return words.slice(0, maxWords).join(' ') + ' …';
 }
