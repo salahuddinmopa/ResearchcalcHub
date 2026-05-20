@@ -2,8 +2,14 @@ import { Rocket, Wrench, Layers } from 'lucide-react';
 import { categories } from '../data/calculators';
 import { CategoryCard } from '../components/ui/CategoryCard';
 import { HeroSection } from '../components/ui/HeroSection';
+import { useSEO } from '../utils/seo';
 
 export function FutureToolsPage() {
+  useSEO(
+    'Future Calculator Tools | ResearchCalcHub',
+    'Preview planned ResearchCalcHub calculators across math, science, finance, cybersecurity, education, health, and everyday life.'
+  );
+
   const futureCategories = categories.filter(category => category.status === 'coming-soon');
 
   return (

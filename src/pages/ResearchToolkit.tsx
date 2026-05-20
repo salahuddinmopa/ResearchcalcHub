@@ -4,6 +4,7 @@ import { calculators } from '../data/calculators';
 import { CalculatorCard } from '../components/ui/CalculatorCard';
 import { HeroSection } from '../components/ui/HeroSection';
 import { FAQSection } from '../components/ui/FAQSection';
+import { useSEO } from '../utils/seo';
 
 const toolkitSteps = [
   { title: 'Design the Study', icon: Target, description: 'Estimate sample size, margin of error, and response requirements before data collection.' },
@@ -22,6 +23,11 @@ const toolkitCalculatorIds = [
 ];
 
 export function ResearchToolkitPage() {
+  useSEO(
+    'Research Toolkit | ResearchCalcHub',
+    'Plan studies, check reliability, analyse survey data, and generate academic reporting text with ResearchCalcHub research tools.'
+  );
+
   const toolkitCalculators = toolkitCalculatorIds
     .map(id => calculators.find(calculator => calculator.id === id))
     .filter(Boolean) as typeof calculators;

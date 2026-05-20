@@ -8,6 +8,7 @@ import {
 import { calculators, categories } from '../data/calculators';
 import { CalculatorCard } from '../components/ui/CalculatorCard';
 import { CategoryCard } from '../components/ui/CategoryCard';
+import { useSEO } from '../utils/seo';
 
 const FEATURED_IDS = ['sample-size', 'cohens-kappa', 'cronbach-alpha', 'maturity-model', 'ahp-weight', 'delphi-consensus'];
 
@@ -26,6 +27,11 @@ const CATEGORY_GRADIENTS: Record<string, string> = {
 };
 
 export function HomePage() {
+  useSEO(
+    'ResearchCalcHub | Academic & Research Calculators',
+    'Free academic calculators for research methods, statistics, reliability, validity, social science, STEM, finance, education, and cybersecurity.'
+  );
+
   const [search, setSearch] = useState('');
   const navigate = useNavigate();
 

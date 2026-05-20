@@ -3,8 +3,14 @@ import {
   BookOpen, Target, Users, Layers, ArrowRight,
   CheckCircle2, FlaskConical, BarChart2, ShieldCheck, Brain
 } from 'lucide-react';
+import { useSEO } from '../utils/seo';
 
 export function AboutPage() {
+  useSEO(
+    'About ResearchCalcHub | Academic Calculator Platform',
+    'Learn about ResearchCalcHub, an educational calculator platform with formulas, steps, interpretations, and academic reporting text.'
+  );
+
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Hero */}

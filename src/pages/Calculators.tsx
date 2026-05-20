@@ -5,6 +5,7 @@ import { calculators, categories, searchCalculators } from '../data/calculators'
 import { CalculatorCard } from '../components/ui/CalculatorCard';
 import { SearchBar } from '../components/ui/SearchBar';
 import type { Calculator, CalculatorStatus, Difficulty, UserType } from '../types';
+import { useSEO } from '../utils/seo';
 
 type StatusFilter = CalculatorStatus | '';
 
@@ -86,6 +87,11 @@ const activeSections = [
 const futureSections: { id: string; title: string }[] = [];
 
 export function CalculatorsPage() {
+  useSEO(
+    'All Academic Calculators | ResearchCalcHub',
+    'Browse free calculators for research methods, statistics, reliability, decision tools, STEM, finance, education, everyday life, and cybersecurity.'
+  );
+
   const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState(searchParams.get('q') || '');
   const [selectedCat, setSelectedCat] = useState(searchParams.get('cat') || '');
