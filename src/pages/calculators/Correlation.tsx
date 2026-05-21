@@ -4,6 +4,8 @@ import { NumericInputBox } from '../../components/ui/NumericInputBox';
 import { getCalculatorById } from '../../data/calculators';
 import { calculatePearsonCorrelation, parseNumberList, parsePairedNumberTable } from '../../utils/statistics';
 import type { CalculatorResult } from '../../types';
+import ResultSection from '../../components/visualizations/ResultSection';
+import ResultGauge from '../../components/visualizations/ResultGauge';
 
 const calc = getCalculatorById('correlation')!;
 
@@ -14,6 +16,18 @@ export function CorrelationPage() {
   const [pairedValues, setPairedValues] = useState('');
   const [result, setResult] = useState<CalculatorResult | null>(null);
   const [error, setError] = useState('');
+
+  const [visualValue, setVisualValue] = useState<number | null>(null);
+  const [visualCategory, setVisualCategory] = useState<'low' | 'medium' | 'high' | 'excellent' | undefined>(undefined);
+  const [visualInterpretation, setVisualInterpretation] = useState('');
+
+  const getColourCategory = (val: number) => {
+    const absVal = Math.abs(val);
+    if (absVal < 0.3) return 'low';
+    if (absVal < 0.5) return 'medium';
+    if (absVal < 0.7) return 'high';
+    return 'excellent';
+  };
 
   const handleCalculate = () => {
     setError('');
@@ -36,6 +50,11 @@ export function CorrelationPage() {
 
     try {
       const r = calculatePearsonCorrelation(x, y);
+      
+      setVisualValue(r.r);
+      setVisualCategory(getColourCategory(r.r));
+      setVisualInterpretation(`Pearson's r = ${r.r.toFixed(3)}, indicating a ${r.interpretation.toLowerCase()}.`);
+
       setResult({
         summary: [
           { label: 'Pearson Correlation Coefficient', value: r.r.toFixed(4), highlight: true },
@@ -62,6 +81,7 @@ export function CorrelationPage() {
     setPairedValues('10\t12\n20\t22\n30\t28\n40\t38\n50\t52\n60\t58\n70\t72\n80\t81\n90\t88\n100\t102');
     setXValues('');
     setYValues('');
+    setVisualValue(null);
   };
 
   const handleReset = () => {
@@ -71,10 +91,30 @@ export function CorrelationPage() {
     setXValues('');
     setYValues('');
     setPairedValues('');
+    setVisualValue(null);
   };
 
   return (
-    <CalculatorLayout calculator={calc} result={result}>
+    <CalculatorLayout 
+      calculator={calc} 
+      result={result}
+      visual={visualValue !== null ? (
+        <ResultSection
+          title="Correlation Strength"
+          visual={
+            <ResultGauge
+              value={visualValue}
+              min={-1}
+              max={1}
+              label="Pearson's r"
+              colourCategory={visualCategory}
+              interpretation={visualInterpretation}
+            />
+          }
+          interpretation={visualInterpretation}
+        />
+      ) : undefined}
+    >
       <div className="space-y-4">
         <div className="flex flex-wrap gap-4">
           <label className="flex items-center gap-2 cursor-pointer">
@@ -111,6 +151,7 @@ export function CorrelationPage() {
           <button onClick={handleExample} className="btn-secondary">Load Example</button>
           <button onClick={handleReset} className="btn-secondary">Reset</button>
         </div>
+
       </div>
     </CalculatorLayout>
   );

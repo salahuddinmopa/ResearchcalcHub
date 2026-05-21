@@ -4,6 +4,8 @@ import { CalculatorLayout } from '../../components/calculators/CalculatorLayout'
 import { getCalculatorById } from '../../data/calculators';
 import { calculateAHPWeights } from '../../utils/decisionTools';
 import type { CalculatorResult } from '../../types';
+import ResultSection from '../../components/visualizations/ResultSection';
+import PieChartResult from '../../components/visualizations/PieChartResult';
 
 const calc = getCalculatorById('ahp-weight')!;
 const defaultCriteria = ['Reliability', 'Validity', 'Feasibility', 'Cost'];
@@ -49,10 +51,15 @@ export function AHPWeightPage() {
     });
   };
 
+  const [visualData, setVisualData] = useState<{name: string, value: number}[]>([]);
+
   const handleCalculate = () => {
     setError('');
     try {
       const r = calculateAHPWeights(criteria, matrix);
+      
+      setVisualData(r.rankings.map(item => ({ name: item.name, value: item.weight * 100 })));
+
       setResult({
         summary: [
           ...r.rankings.map(item => ({ label: `#${item.rank} ${item.name}`, value: `${(item.weight * 100).toFixed(2)}%`, highlight: item.rank === 1 })),
@@ -73,11 +80,25 @@ export function AHPWeightPage() {
     }
   };
 
-  const handleExample = () => { setCriteria(defaultCriteria); setMatrix(defaultMatrix.map(row => [...row])); setResult(null); setError(''); };
-  const handleReset = () => { setCriteria(['Criterion A', 'Criterion B', 'Criterion C']); setMatrix([[1, 3, 5], [1 / 3, 1, 3], [1 / 5, 1 / 3, 1]]); setResult(null); setError(''); };
+  const handleExample = () => { setCriteria(defaultCriteria); setMatrix(defaultMatrix.map(row => [...row])); setResult(null); setVisualData([]); setError(''); };
+  const handleReset = () => { setCriteria(['Criterion A', 'Criterion B', 'Criterion C']); setMatrix([[1, 3, 5], [1 / 3, 1, 3], [1 / 5, 1 / 3, 1]]); setResult(null); setVisualData([]); setError(''); };
 
   return (
-    <CalculatorLayout calculator={calc} result={result}>
+    <CalculatorLayout 
+      calculator={calc} 
+      result={result}
+      visual={visualData.length > 0 ? (
+        <ResultSection
+          title="AHP Weight Distribution"
+          visual={
+            <PieChartResult
+              data={visualData}
+            />
+          }
+          interpretation="The chart visualises the derived weights (percentages) for each criterion based on your pairwise comparisons."
+        />
+      ) : undefined}
+    >
       <div className="space-y-5">
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-xs text-blue-800">
           Use Saaty's 1-9 scale. Values below the diagonal are reciprocal values and are filled automatically.

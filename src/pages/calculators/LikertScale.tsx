@@ -4,6 +4,8 @@ import { CalculatorLayout } from '../../components/calculators/CalculatorLayout'
 import { getCalculatorById } from '../../data/calculators';
 import { calculateLikertMean, type LikertItem } from '../../utils/calculations';
 import type { CalculatorResult } from '../../types';
+import ResultSection from '../../components/visualizations/ResultSection';
+import BarChartResult from '../../components/visualizations/BarChartResult';
 
 const calc = getCalculatorById('likert-scale')!;
 
@@ -26,6 +28,17 @@ export function LikertScalePage() {
   const [result, setResult] = useState<CalculatorResult | null>(null);
   const [error, setError] = useState('');
 
+  const [visualData, setVisualData] = useState<{name: string, value: number}[]>([]);
+  const [visualValue, setVisualValue] = useState<number | null>(null);
+
+  const getColourCategory = (val: number, max: number) => {
+    const ratio = val / max;
+    if (ratio < 0.4) return 'low';
+    if (ratio < 0.7) return 'medium';
+    if (ratio < 0.9) return 'high';
+    return 'excellent';
+  };
+
   const updateFrequency = (itemIndex: number, frequencyIndex: number, value: string) => {
     setItems(prev => prev.map((item, index) => {
       if (index !== itemIndex) return item;
@@ -44,6 +57,8 @@ export function LikertScalePage() {
     setLabels(labelPresets[points] || Array.from({ length: points }, (_, index) => `Level ${index + 1}`));
     setItems(prev => prev.map(item => ({ ...item, frequencies: new Array(points).fill(0) })));
     setResult(null);
+    setVisualData([]);
+    setVisualValue(null);
   };
 
   const addItem = () => setItems(prev => [...prev, { label: `Item ${prev.length + 1}`, frequencies: new Array(scalePoints).fill(0) }]);
@@ -57,6 +72,10 @@ export function LikertScalePage() {
     if (items.some(item => item.frequencies.reduce((sum, frequency) => sum + frequency, 0) === 0)) return setError('Each item must have at least one response.');
 
     const r = calculateLikertMean(items, scalePoints);
+    
+    setVisualValue(r.overallMean);
+    setVisualData(r.items.map(item => ({ name: item.label, value: item.mean })));
+
     setResult({
       summary: [
         { label: 'Weighted Mean', value: r.overallMean.toFixed(3), highlight: true },
@@ -79,18 +98,39 @@ export function LikertScalePage() {
     setLabels(labelPresets[5]);
     setItems(exampleItems);
     setResult(null);
+    setVisualData([]);
+    setVisualValue(null);
     setError('');
   };
 
   const handleReset = () => {
     setResult(null);
     setError('');
+    setVisualData([]);
+    setVisualValue(null);
     setLabels(labelPresets[scalePoints] || Array.from({ length: scalePoints }, (_, index) => `Level ${index + 1}`));
     setItems([{ label: 'Item 1', frequencies: new Array(scalePoints).fill(0) }]);
   };
 
   return (
-    <CalculatorLayout calculator={calc} result={result}>
+    <CalculatorLayout 
+      calculator={calc} 
+      result={result}
+      visual={visualValue !== null ? (
+        <ResultSection
+          title="Likert Means Distribution"
+          visual={
+            <BarChartResult 
+              data={visualData} 
+              xKey="name" 
+              yKey="value" 
+              barColor="#4f46e5"
+            />
+          }
+          interpretation={`The chart displays the weighted mean for each item on a ${scalePoints}-point scale.`}
+        />
+      ) : undefined}
+    >
       <div className="space-y-5">
         <div className="flex flex-wrap items-center gap-4">
           <label className="label mb-0">Scale Points</label>
@@ -169,6 +209,7 @@ export function LikertScalePage() {
           <button onClick={handleExample} className="btn-secondary">Load Example</button>
           <button onClick={handleReset} className="btn-secondary">Reset</button>
         </div>
+
       </div>
     </CalculatorLayout>
   );

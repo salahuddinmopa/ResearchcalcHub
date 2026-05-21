@@ -4,6 +4,8 @@ import { CalculatorLayout } from '../../components/calculators/CalculatorLayout'
 import { getCalculatorById } from '../../data/calculators';
 import { calculateWeightedScoring, type WeightedCriterion } from '../../utils/calculations';
 import type { CalculatorResult } from '../../types';
+import ResultSection from '../../components/visualizations/ResultSection';
+import BarChartResult from '../../components/visualizations/BarChartResult';
 
 const calc = getCalculatorById('weighted-scoring')!;
 
@@ -23,6 +25,7 @@ export function WeightedScoringPage() {
   const [normaliseWeights, setNormaliseWeights] = useState(true);
   const [result, setResult] = useState<CalculatorResult | null>(null);
   const [error, setError] = useState('');
+  const [visualData, setVisualData] = useState<{name: string, value: number}[]>([]);
 
   const update = (index: number, field: keyof WeightedCriterion, value: string) => {
     setCriteria(prev => prev.map((criterion, criterionIndex) => (
@@ -50,6 +53,8 @@ export function WeightedScoringPage() {
     const r = calculateWeightedScoring(criteria, max, normaliseWeights);
     const rankedCriteria = [...r.criteria].sort((a, b) => a.rank - b.rank);
 
+    setVisualData(r.criteria.map(c => ({ name: c.name, value: c.weightedScore })));
+
     setResult({
       summary: [
         { label: 'Weighted Score', value: `${r.weightedScore.toFixed(3)} / ${r.maxPossibleScore.toFixed(3)}`, highlight: true },
@@ -72,6 +77,7 @@ export function WeightedScoringPage() {
     setMaxScore('10');
     setNormaliseWeights(true);
     setResult(null);
+    setVisualData([]);
     setError('');
   };
 
@@ -84,10 +90,28 @@ export function WeightedScoringPage() {
     ]);
     setMaxScore('10');
     setNormaliseWeights(true);
+    setVisualData([]);
   };
 
   return (
-    <CalculatorLayout calculator={calc} result={result}>
+    <CalculatorLayout 
+      calculator={calc} 
+      result={result}
+      visual={visualData.length > 0 ? (
+        <ResultSection
+          title="Weighted Score Breakdown"
+          visual={
+            <BarChartResult
+              data={visualData}
+              xKey="name"
+              yKey="value"
+              barColor="#4f46e5"
+            />
+          }
+          interpretation="The chart displays the contribution of each criterion to the final overall score, accounting for its weight."
+        />
+      ) : undefined}
+    >
       <div className="space-y-4">
         <div className="flex flex-wrap items-end gap-4">
           <div className="w-36">
@@ -147,6 +171,7 @@ export function WeightedScoringPage() {
           <button onClick={handleExample} className="btn-secondary">Load Example</button>
           <button onClick={handleReset} className="btn-secondary">Reset</button>
         </div>
+
       </div>
     </CalculatorLayout>
   );

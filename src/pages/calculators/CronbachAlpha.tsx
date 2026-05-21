@@ -4,6 +4,8 @@ import { TableInput } from '../../components/ui/TableInput';
 import { getCalculatorById } from '../../data/calculators';
 import { calculateCronbachAlpha } from '../../utils/calculations';
 import type { CalculatorResult } from '../../types';
+import ResultSection from '../../components/visualizations/ResultSection';
+import ResultGauge from '../../components/visualizations/ResultGauge';
 
 const calc = getCalculatorById('cronbach-alpha')!;
 
@@ -31,6 +33,16 @@ export function CronbachAlphaPage() {
   const [rows, setRows] = useState<string[][]>(exampleRows);
   const [result, setResult] = useState<CalculatorResult | null>(null);
   const [error, setError] = useState('');
+  const [visualValue, setVisualValue] = useState<number | null>(null);
+  const [visualInterpretation, setVisualInterpretation] = useState<string>('');
+  const [visualCategory, setVisualCategory] = useState<'low' | 'medium' | 'high' | 'excellent' | undefined>(undefined);
+
+  const getColourCategory = (val: number) => {
+    if (val < 0.6) return 'low';
+    if (val < 0.7) return 'medium';
+    if (val < 0.8) return 'high';
+    return 'excellent';
+  };
 
   const syncItems = (count: number) => {
     const labels = Array.from({ length: count }, (_, index) => itemLabels[index] || `Item ${index + 1}`);
@@ -47,6 +59,10 @@ export function CronbachAlphaPage() {
       }
       if (data.some(row => row.some(value => !Number.isFinite(value)))) return setError('All survey item values must be numeric.');
       const r = calculateCronbachAlpha(data);
+      // Update visual state
+      setVisualValue(r.alpha);
+      setVisualInterpretation(`Alpha = ${r.alpha.toFixed(3)}, indicating ${r.interpretation.toLowerCase()}.`);
+      setVisualCategory(getColourCategory(r.alpha));
       setResult({
         summary: [
           { label: "Cronbach's Alpha", value: r.alpha.toFixed(4), highlight: true },
@@ -84,7 +100,26 @@ export function CronbachAlphaPage() {
   };
 
   return (
-    <CalculatorLayout calculator={calc} result={result}>
+    <CalculatorLayout 
+      calculator={calc} 
+      result={result}
+      visual={visualValue !== null ? (
+        <ResultSection
+          title="Cronbach Alpha Result"
+          visual={
+            <ResultGauge
+              value={visualValue}
+              min={0}
+              max={1}
+              label="Cronbach's Alpha"
+              colourCategory={visualCategory}
+              interpretation={visualInterpretation}
+            />
+          }
+          interpretation={visualInterpretation}
+        />
+      ) : undefined}
+    >
       <div className="space-y-5">
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
           {ALPHA_SCALE.map(item => (
@@ -144,6 +179,7 @@ export function CronbachAlphaPage() {
           <button onClick={handleExample} className="btn-secondary">Load Example</button>
           <button onClick={handleReset} className="btn-secondary">Reset</button>
         </div>
+
       </div>
     </CalculatorLayout>
   );

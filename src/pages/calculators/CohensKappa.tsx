@@ -1,5 +1,9 @@
 import { useMemo, useState } from 'react';
 import { CalculatorLayout } from '../../components/calculators/CalculatorLayout';
+import ResultSection from '../../components/visualizations/ResultSection';
+import ResultGauge from '../../components/visualizations/ResultGauge';
+// Add new visual state
+
 import { TableInput } from '../../components/ui/TableInput';
 import { getCalculatorById } from '../../data/calculators';
 import { buildCohenMatrixFromPairs, calculateCohensKappa, parseDelimitedTable } from '../../utils/calculations';
@@ -31,12 +35,20 @@ const examplePairs = [
 
 export function CohensKappaPage() {
   const [inputMode, setInputMode] = useState<'raw' | 'matrix'>('raw');
+  const [categoryLabels, setCategoryLabels] = useState<string[]>(['Category A', 'Category B']);
   const [rawRows, setRawRows] = useState<string[][]>(examplePairs);
   const [matrixRows, setMatrixRows] = useState<string[][]>([
     ['20', '5'],
     ['10', '65'],
   ]);
-  const [categoryLabels, setCategoryLabels] = useState(['Category A', 'Category B']);
+  const [visualValue, setVisualValue] = useState<number | null>(null);
+  const [visualInterpretation, setVisualInterpretation] = useState<string>('');
+  const getColourCategory = (val: number) => {
+    if (val < 0.2) return 'low';
+    if (val < 0.4) return 'medium';
+    if (val < 0.6) return 'high';
+    return 'excellent';
+  };
   const [result, setResult] = useState<CalculatorResult | null>(null);
   const [error, setError] = useState('');
 
@@ -91,6 +103,8 @@ export function CohensKappaPage() {
         ],
         academicText: r.academicText,
       });
+      setVisualValue(r.kappa);
+      setVisualInterpretation(r.interpretation);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to calculate Cohen\'s Kappa.');
     }
@@ -115,7 +129,17 @@ export function CohensKappaPage() {
   };
 
   return (
-    <CalculatorLayout calculator={calc} result={result}>
+    <CalculatorLayout 
+      calculator={calc} 
+      result={result}
+      visual={result && visualValue !== null ? (
+        <ResultSection
+          title="Result Visual"
+          visual={<ResultGauge value={visualValue} min={0} max={1} label="Cohen's Kappa" colourCategory={getColourCategory(visualValue)} />}
+          interpretation={visualInterpretation}
+        />
+      ) : undefined}
+    >
       <div className="space-y-5">
         <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
           {KAPPA_SCALE.map(item => (
@@ -195,13 +219,16 @@ export function CohensKappaPage() {
           </div>
         )}
 
-        {error && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-2.5">{error}</p>}
+        {error && (
+          <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-2.5">{error}</p>
+        )}
 
         <div className="flex flex-wrap gap-3 pt-2">
           <button onClick={handleCalculate} className="btn-primary flex-1 sm:flex-none">Calculate Kappa</button>
           <button onClick={handleExample} className="btn-secondary">Load Example</button>
           <button onClick={handleReset} className="btn-secondary">Reset</button>
         </div>
+
       </div>
     </CalculatorLayout>
   );

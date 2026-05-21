@@ -4,6 +4,8 @@ import { CalculatorLayout } from '../../components/calculators/CalculatorLayout'
 import { getCalculatorById } from '../../data/calculators';
 import { calculateDecisionMatrix } from '../../utils/decisionTools';
 import type { CalculatorResult } from '../../types';
+import ResultSection from '../../components/visualizations/ResultSection';
+import BarChartResult from '../../components/visualizations/BarChartResult';
 
 const calc = getCalculatorById('decision-matrix')!;
 
@@ -23,6 +25,8 @@ export function DecisionMatrixPage() {
   const [scores, setScores] = useState<string[][]>([['5', '5'], ['5', '5']]);
   const [result, setResult] = useState<CalculatorResult | null>(null);
   const [error, setError] = useState('');
+
+  const [visualData, setVisualData] = useState<{name: string, value: number}[]>([]);
 
   const syncScores = (nextOptions = options, nextCriteria = criteria) => {
     setScores(prev => nextOptions.map((_, optionIndex) => (
@@ -65,6 +69,9 @@ export function DecisionMatrixPage() {
         weights: weights.map(Number),
         scores: scores.map(row => row.map(Number)),
       });
+      
+      setVisualData(r.results.map(item => ({ name: item.option, value: item.total })));
+
       setResult({
         summary: [
           { label: 'Best Option', value: r.bestOption.option, highlight: true },
@@ -90,6 +97,7 @@ export function DecisionMatrixPage() {
     setWeights(exampleWeights);
     setScores(exampleScores);
     setResult(null);
+    setVisualData([]);
     setError('');
   };
 
@@ -99,11 +107,29 @@ export function DecisionMatrixPage() {
     setWeights(['50', '50']);
     setScores([['5', '5'], ['5', '5']]);
     setResult(null);
+    setVisualData([]);
     setError('');
   };
 
   return (
-    <CalculatorLayout calculator={calc} result={result}>
+    <CalculatorLayout 
+      calculator={calc} 
+      result={result}
+      visual={visualData.length > 0 ? (
+        <ResultSection
+          title="Options Comparison"
+          visual={
+            <BarChartResult
+              data={visualData}
+              xKey="name"
+              yKey="value"
+              barColor="#4f46e5"
+            />
+          }
+          interpretation="The chart displays the total weighted score for each option. Higher scores indicate better options."
+        />
+      ) : undefined}
+    >
       <div className="space-y-5">
         <div>
           <label className="label">Options</label>
@@ -168,6 +194,7 @@ export function DecisionMatrixPage() {
           <button onClick={handleExample} className="btn-secondary">Load Example</button>
           <button onClick={handleReset} className="btn-secondary">Reset</button>
         </div>
+
       </div>
     </CalculatorLayout>
   );

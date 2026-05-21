@@ -4,6 +4,8 @@ import { TableInput } from '../../components/ui/TableInput';
 import { getCalculatorById } from '../../data/calculators';
 import { calculateRiskMatrix, type RiskItem } from '../../utils/decisionTools';
 import type { CalculatorResult } from '../../types';
+import ResultSection from '../../components/visualizations/ResultSection';
+import PieChartResult from '../../components/visualizations/PieChartResult';
 
 const calc = getCalculatorById('risk-matrix')!;
 
@@ -26,6 +28,9 @@ export function RiskMatrixPage() {
   const [result, setResult] = useState<CalculatorResult | null>(null);
   const [error, setError] = useState('');
 
+  const [visualData, setVisualData] = useState<{name: string, value: number}[]>([]);
+  const [visualColors, setVisualColors] = useState<string[]>([]);
+
   const parseRows = (): RiskItem[] => rows.map(row => ({
     name: row[0] || '',
     likelihood: Number(row[1]),
@@ -36,6 +41,16 @@ export function RiskMatrixPage() {
     setError('');
     try {
       const r = calculateRiskMatrix(parseRows());
+      
+      const vData: {name: string, value: number}[] = [];
+      const vColors: string[] = [];
+      if (r.summary.Critical > 0) { vData.push({ name: 'Critical', value: r.summary.Critical }); vColors.push('#ef4444'); }
+      if (r.summary.High > 0) { vData.push({ name: 'High', value: r.summary.High }); vColors.push('#f97316'); }
+      if (r.summary.Moderate > 0) { vData.push({ name: 'Moderate', value: r.summary.Moderate }); vColors.push('#eab308'); }
+      if (r.summary.Low > 0) { vData.push({ name: 'Low', value: r.summary.Low }); vColors.push('#22c55e'); }
+      setVisualData(vData);
+      setVisualColors(vColors);
+
       setResult({
         summary: [
           { label: 'Total Risks Assessed', value: r.risks.length.toString(), highlight: true },
@@ -62,11 +77,26 @@ export function RiskMatrixPage() {
     }
   };
 
-  const handleExample = () => { setRows(exampleRows); setResult(null); setError(''); };
-  const handleReset = () => { setRows([['', '3', '3']]); setResult(null); setError(''); };
+  const handleExample = () => { setRows(exampleRows); setResult(null); setVisualData([]); setError(''); };
+  const handleReset = () => { setRows([['', '3', '3']]); setResult(null); setVisualData([]); setError(''); };
 
   return (
-    <CalculatorLayout calculator={calc} result={result}>
+    <CalculatorLayout 
+      calculator={calc} 
+      result={result}
+      visual={visualData.length > 0 ? (
+        <ResultSection
+          title="Risk Profile Summary"
+          visual={
+            <PieChartResult
+              data={visualData}
+              colors={visualColors}
+            />
+          }
+          interpretation="The chart displays the distribution of identified risks across severity levels."
+        />
+      ) : undefined}
+    >
       <div className="space-y-5">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {[
@@ -97,6 +127,7 @@ export function RiskMatrixPage() {
           <button onClick={handleExample} className="btn-secondary">Load Example</button>
           <button onClick={handleReset} className="btn-secondary">Reset</button>
         </div>
+
       </div>
     </CalculatorLayout>
   );

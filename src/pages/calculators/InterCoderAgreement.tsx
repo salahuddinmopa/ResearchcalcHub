@@ -3,7 +3,10 @@ import { CalculatorLayout } from '../../components/calculators/CalculatorLayout'
 import { TableInput } from '../../components/ui/TableInput';
 import { getCalculatorById } from '../../data/calculators';
 import { calculateInterCoderAgreement, calculateMultiCoderAgreement } from '../../utils/calculations';
+import ResultSection from '../../components/visualizations/ResultSection';
+import ResultGauge from '../../components/visualizations/ResultGauge';
 import type { CalculatorResult } from '../../types';
+
 
 const calc = getCalculatorById('inter-coder-agreement')!;
 
@@ -27,6 +30,16 @@ export function InterCoderAgreementPage() {
   const [categoryLabels, setCategoryLabels] = useState('Theme A, Theme B, Theme C');
   const [result, setResult] = useState<CalculatorResult | null>(null);
   const [error, setError] = useState('');
+  const [visualValue, setVisualValue] = useState<number | null>(null);
+  const [visualInterpretation, setVisualInterpretation] = useState<string>('');
+  const [visualCategory, setVisualCategory] = useState<'low' | 'medium' | 'high' | 'excellent' | undefined>(undefined);
+
+  const getColourCategory = (val: number) => {
+    if (val < 0.2) return 'low';
+    if (val < 0.4) return 'medium';
+    if (val < 0.6) return 'high';
+    return 'excellent';
+  };
 
   const syncCoders = (count: number) => {
     setCoderCount(count);
@@ -53,21 +66,26 @@ export function InterCoderAgreementPage() {
         })()
         : calculateMultiCoderAgreement(rows.map(row => Array.from({ length: coderCount }, (_, index) => row[index] || '')));
 
-      setResult({
-        summary: [
-          { label: 'Percentage Agreement', value: `${r.agreementPct.toFixed(2)}%`, highlight: true },
-          { label: 'Agreement Count', value: `${r.agreements} / ${r.total}`, highlight: true },
-          { label: 'Disagreement Count', value: r.disagreements.toString() },
-          { label: 'Coder Columns', value: r.coderCount.toString() },
-          { label: 'Rows Skipped for Missing Values', value: r.skippedRows.toString() },
-          { label: 'Category Labels', value: r.categories.join(', ') || categoryLabels },
-          { label: 'Interpretation', value: r.interpretation },
-        ],
-        interpretation: `${r.agreementPct.toFixed(1)}% agreement across ${r.coderCount} coder columns: ${r.interpretation}. ${r.skippedRows > 0 ? `${r.skippedRows} row(s) with missing values were excluded.` : 'No missing rows were excluded.'}`,
-        interpretationLevel: r.interpretationLevel as CalculatorResult['interpretationLevel'],
-        steps: r.steps,
-        academicText: r.academicText,
-      });
+        setResult({
+          summary: [
+            { label: 'Percentage Agreement', value: `${r.agreementPct.toFixed(2)}%`, highlight: true },
+            { label: 'Agreement Count', value: `${r.agreements} / ${r.total}`, highlight: true },
+            { label: 'Disagreement Count', value: r.disagreements.toString() },
+            { label: 'Coder Columns', value: r.coderCount.toString() },
+            { label: 'Rows Skipped for Missing Values', value: r.skippedRows.toString() },
+            { label: 'Category Labels', value: r.categories.join(', ') || categoryLabels },
+            { label: 'Interpretation', value: r.interpretation },
+          ],
+          interpretation: `${r.agreementPct.toFixed(1)}% agreement across ${r.coderCount} coder columns: ${r.interpretation}. ${r.skippedRows > 0 ? `${r.skippedRows} row(s) with missing values were excluded.` : 'No missing rows were excluded.'}`,
+          interpretationLevel: r.interpretationLevel as CalculatorResult['interpretationLevel'],
+          steps: r.steps,
+          academicText: r.academicText,
+        });
+        // Update visual state (normalize to 0‑1 scale)
+        const normalized = r.agreementPct / 100;
+        setVisualValue(normalized);
+        setVisualInterpretation(`${r.agreementPct.toFixed(1)}% – ${r.interpretation}`);
+        setVisualCategory(getColourCategory(normalized));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to calculate inter-coder agreement.');
     }
@@ -80,6 +98,7 @@ export function InterCoderAgreementPage() {
     setCategoryLabels('Theme A, Theme B, Theme C');
     setResult(null);
     setError('');
+    setVisualValue(null);
   };
 
   const handleReset = () => {
@@ -92,10 +111,30 @@ export function InterCoderAgreementPage() {
       ['', ''],
     ]);
     setCategoryLabels('');
+    setVisualValue(null);
   };
 
   return (
-    <CalculatorLayout calculator={calc} result={result}>
+    <CalculatorLayout 
+      calculator={calc} 
+      result={result}
+      visual={visualValue !== null ? (
+        <ResultSection
+          title="Inter‑Coder Agreement Result"
+          visual={
+            <ResultGauge
+              value={visualValue}
+              min={0}
+              max={1}
+              label="Agreement %"
+              colourCategory={visualCategory}
+              interpretation={visualInterpretation}
+            />
+          }
+          interpretation={visualInterpretation}
+        />
+      ) : undefined}
+    >
       <div className="space-y-5">
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-800">
           Enter one coded item per row. Rows with missing coder values are excluded and reported clearly.
@@ -138,13 +177,16 @@ export function InterCoderAgreementPage() {
           pastePlaceholder={'Theme A\tTheme A\tTheme A\nTheme B\tTheme B\tTheme A'}
         />
 
-        {error && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-2.5">{error}</p>}
+        {error && (
+          <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-2.5">{error}</p>
+        )}
 
         <div className="flex flex-wrap gap-3 pt-2">
           <button onClick={handleCalculate} className="btn-primary flex-1 sm:flex-none">Calculate Agreement</button>
           <button onClick={handleExample} className="btn-secondary">Load Example</button>
           <button onClick={handleReset} className="btn-secondary">Reset</button>
         </div>
+
       </div>
     </CalculatorLayout>
   );

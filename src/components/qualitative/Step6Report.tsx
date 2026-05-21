@@ -1,4 +1,6 @@
 import React from 'react';
+import ResultSection from './../visualizations/ResultSection';
+import BarChartResult from './../visualizations/BarChartResult';
 
 interface Props {
   projectTitle: string;
@@ -34,49 +36,68 @@ export default function Step6Report({ projectTitle, researchQuestion, dataType, 
     });
   };
 
+  const codeChartData = codes.map((c) => ({
+    name: c.name,
+    value: c.frequency || 0,
+  }));
+
   return (
-    <div className="space-y-4" id="report-content">
+    <div className="space-y-6" id="report-content">
       <h2 className="text-2xl font-semibold mb-2">Step 6 – Report</h2>
-      <section className="bg-gray-50 p-4 rounded">
-        <h3 className="font-bold">Project Overview</h3>
-        <p><strong>Title:</strong> {projectTitle || '-'} </p>
-        <p><strong>Research Question:</strong> {researchQuestion || '-'} </p>
-        <p><strong>Data Type:</strong> {dataType}</p>
+      <section className="bg-gray-50 p-6 rounded-xl shadow-sm border border-gray-100">
+        <h3 className="text-lg font-bold mb-4 text-indigo-900 border-b pb-2">Project Overview</h3>
+        <div className="grid grid-cols-1 gap-2">
+          <p><strong>Title:</strong> {projectTitle || '-'} </p>
+          <p><strong>Research Question:</strong> {researchQuestion || '-'} </p>
+          <p><strong>Data Type:</strong> {dataType}</p>
+        </div>
       </section>
       {analysisResult && (
-        <section className="bg-gray-50 p-4 rounded">
-          <h3 className="font-bold">Familiarisation Summary</h3>
-          <p>{analysisResult.summary}</p>
+        <section className="bg-gray-50 p-6 rounded-xl shadow-sm border border-gray-100">
+          <h3 className="text-lg font-bold mb-4 text-indigo-900 border-b pb-2">Familiarisation Summary</h3>
+          <p className="text-gray-700 leading-relaxed">{analysisResult.summary}</p>
         </section>
       )}
-      <section className="bg-white p-4 rounded shadow">
-        <h3 className="font-bold mb-2">Codes</h3>
-        <ul className="list-disc pl-5">
+
+      {codes.length > 0 && (
+        <ResultSection
+          title="Code Frequencies"
+          visual={<BarChartResult data={codeChartData} title="" xKey="name" yKey="value" barColor="#4f46e5" />}
+          interpretation="The chart above shows the frequency of each code identified in the dataset."
+        />
+      )}
+
+      <section className="bg-white p-6 rounded-xl shadow-md border border-gray-100">
+        <h3 className="text-lg font-bold mb-4 text-indigo-900 border-b pb-2">Codes Summary</h3>
+        <ul className="list-disc pl-5 space-y-1 text-gray-700">
           {codes.map((c, i) => (
-            <li key={i}>{c.name} (Freq: {c.frequency})</li>
+            <li key={i}><span className="font-semibold">{c.name}</span> (Frequency: {c.frequency})</li>
           ))}
         </ul>
       </section>
-      <section className="bg-white p-4 rounded shadow">
-        <h3 className="font-bold mb-2">Categories</h3>
-        <ul className="list-disc pl-5">
+
+      <section className="bg-white p-6 rounded-xl shadow-md border border-gray-100">
+        <h3 className="text-lg font-bold mb-4 text-indigo-900 border-b pb-2">Categories</h3>
+        <ul className="list-disc pl-5 space-y-1 text-gray-700">
           {categories.map((cat, i) => (
             <li key={i}>{cat.name}</li>
           ))}
         </ul>
       </section>
-      <section className="bg-white p-4 rounded shadow">
-        <h3 className="font-bold mb-2">Themes</h3>
-        <ul className="list-disc pl-5">
+      <section className="bg-white p-6 rounded-xl shadow-md border border-gray-100">
+        <h3 className="text-lg font-bold mb-4 text-indigo-900 border-b pb-2">Themes</h3>
+        <ul className="list-disc pl-5 space-y-1 text-gray-700">
           {themes.map((t, i) => (
-            <li key={i}>{t.name} – {t.strength}</li>
+            <li key={i}><span className="font-semibold">{t.name}</span> – Strength: {t.strength}</li>
           ))}
         </ul>
       </section>
-      <div className="flex space-x-2 mt-4">
-        <button className="btn-primary" onClick={generatePDF}>Download PDF</button>
-        <button className="btn-primary" onClick={() => exportCSV(codes, 'codes.csv')}>Export Codes CSV</button>
-        <button className="btn-primary" onClick={() => exportCSV(themes, 'themes.csv')}>Export Themes CSV</button>
+
+      {/* Exclude these buttons from PDF by rendering them outside #report-content or hiding them during print */}
+      <div className="flex flex-wrap gap-3 mt-6 pt-4 border-t html2pdf__ignore" data-html2canvas-ignore>
+        <button className="btn-primary" onClick={generatePDF}>Download PDF Report</button>
+        <button className="btn-secondary" onClick={() => exportCSV(codes, 'codes.csv')}>Export Codes (CSV)</button>
+        <button className="btn-secondary" onClick={() => exportCSV(themes, 'themes.csv')}>Export Themes (CSV)</button>
       </div>
     </div>
   );

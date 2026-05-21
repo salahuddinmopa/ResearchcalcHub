@@ -20,6 +20,7 @@ interface Props {
   calculator: Calculator;
   result?: CalculatorResult | null;
   csvExport?: CsvExport | null;
+  visual?: React.ReactNode;
   children: React.ReactNode;
 }
 
@@ -47,7 +48,7 @@ function getRecentCalculations(): RecentCalculation[] {
   }
 }
 
-export function CalculatorLayout({ calculator, result, csvExport, children }: Props) {
+export function CalculatorLayout({ calculator, result, csvExport, visual, children }: Props) {
   useSEO(`${calculator.name} | ResearchCalcHub`, `${calculator.description} Formula, examples, interpretation, exportable reports, and related calculators for students, researchers, and professionals.`);
   const [stepsOpen, setStepsOpen] = useState(false);
   const [faqOpen, setFaqOpen] = useState<number | null>(null);
@@ -121,16 +122,23 @@ export function CalculatorLayout({ calculator, result, csvExport, children }: Pr
   const handleDownload = () => {
     if (!result) return;
     setIsDownloading(true);
-    downloadResultAsPDF(
-      calculator.name,
-      result.summary.map(r => ({ label: r.label, value: r.value, highlight: r.highlight })),
-      result.interpretation,
-      result.academicText,
-      result.steps,
-      { inputs: getInputSnapshot(), formula: calculator.formula, disclaimer }
-    );
-    setIsDownloading(false);
-    showToast('PDF report downloaded');
+    
+    // Dynamically import html2pdf to avoid SSR issues
+    import('html2pdf.js').then((html2pdf) => {
+      const element = document.getElementById('calculator-report-content');
+      if (element) {
+        const filename = calculator.name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+        html2pdf.default().from(element).save(`${filename}_report.pdf`).then(() => {
+          setIsDownloading(false);
+          showToast('PDF report downloaded');
+        });
+      } else {
+        setIsDownloading(false);
+      }
+    }).catch(() => {
+      setIsDownloading(false);
+      showToast('Failed to generate PDF');
+    });
   };
 
   const handleCopyResult = async () => {
@@ -197,7 +205,7 @@ export function CalculatorLayout({ calculator, result, csvExport, children }: Pr
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main content */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-6" id="calculator-report-content">
             {/* Title section */}
             <div className="print-section">
               <div className="flex flex-wrap items-center gap-2 mb-2">
@@ -227,7 +235,7 @@ export function CalculatorLayout({ calculator, result, csvExport, children }: Pr
             <FormulaBox formula={calculator.formula} />
 
             {/* Calculator inputs (injected by child) */}
-            <div className="card print:hidden" ref={inputRef}>
+            <div className="card print:hidden" ref={inputRef} data-html2canvas-ignore="true">
               <div className="flex items-center justify-between gap-3 mb-5">
                 <h2 className="text-lg font-semibold text-slate-900">Calculate</h2>
                 <span className="text-xs text-slate-400" title="Inputs are captured automatically for copy, PDF, and recent calculation history.">
@@ -240,6 +248,12 @@ export function CalculatorLayout({ calculator, result, csvExport, children }: Pr
             {/* Results */}
             {result && (
               <div className="space-y-4 animate-slide-up">
+                {visual && (
+                  <div className="animate-fade-in">
+                    {visual}
+                  </div>
+                )}
+                
                 <ResultCard results={result.summary} title="Calculation Results" />
 
                 <InterpretationBox
@@ -278,7 +292,7 @@ export function CalculatorLayout({ calculator, result, csvExport, children }: Pr
                 <AcademicReportBox text={result.academicText} />
 
                 {/* Download */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 print:hidden">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 print:hidden" data-html2canvas-ignore="true">
                   <button
                     onClick={handleCopyResult}
                     className="btn-secondary w-full flex items-center justify-center gap-2 text-sm"
@@ -315,7 +329,7 @@ export function CalculatorLayout({ calculator, result, csvExport, children }: Pr
 
             {/* FAQ */}
             {faqs.length > 0 && (
-              <div className="card">
+              <div className="card" data-html2canvas-ignore="true">
                 <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
                   <HelpCircle className="w-5 h-5 text-slate-500" />
                   Frequently Asked Questions

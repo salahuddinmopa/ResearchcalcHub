@@ -5,6 +5,8 @@ import { MaturityChart } from '../../components/ui/MaturityChart';
 import { getCalculatorById } from '../../data/calculators';
 import { calculateMaturityModel, maturityLevelNames, type MaturityDomain } from '../../utils/maturityScoring';
 import type { CalculatorResult } from '../../types';
+import ResultSection from '../../components/visualizations/ResultSection';
+import RadarChartResult from '../../components/visualizations/RadarChartResult';
 
 const calc = getCalculatorById('maturity-model')!;
 const levelColors = ['bg-red-100 text-red-700', 'bg-orange-100 text-orange-700', 'bg-yellow-100 text-yellow-700', 'bg-blue-100 text-blue-700', 'bg-green-100 text-green-700'];
@@ -87,7 +89,22 @@ export function MaturityModelPage() {
   const handleReset = () => { setDomains([{ name: 'Domain 1', weight: 100, factors: [{ name: 'Factor 1', score: 2, weight: 100 }] }]); setOpenDomains([0]); setNormaliseWeights(true); setResult(null); setError(''); setChartItems([]); };
 
   return (
-    <CalculatorLayout calculator={calc} result={result}>
+    <CalculatorLayout 
+      calculator={calc} 
+      result={result}
+      visual={chartItems.length > 0 ? (
+        <ResultSection
+          title="Maturity Profile"
+          visual={
+            <RadarChartResult 
+              data={chartItems.map(item => ({ category: item.name, value: item.score }))} 
+              title="" 
+            />
+          }
+          interpretation="The radar chart visualises maturity scores across assessed domains. Larger area indicates higher overall maturity."
+        />
+      ) : undefined}
+    >
       <div className="space-y-5">
         <div className="grid grid-cols-5 gap-1.5">
           {maturityLevelNames.map((name, index) => (
@@ -145,7 +162,6 @@ export function MaturityModelPage() {
         </div>
 
         <button onClick={addDomain} className="btn-secondary text-sm flex items-center gap-2"><Plus className="w-4 h-4" /> Add Domain</button>
-        {chartItems.length > 0 && <MaturityChart items={chartItems} />}
         {error && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-2.5">{error}</p>}
         <div className="flex flex-wrap gap-3 pt-2">
           <button onClick={handleCalculate} className="btn-primary flex-1 sm:flex-none">Calculate Maturity Score</button>
