@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { Navbar } from './components/layout/Navbar';
 import { Footer } from './components/layout/Footer';
 import { HomePage } from './pages/Home';
+import StatAnalyzerPage from './pages/StatAnalyzer/StatAnalyzerPage';
 import { CalculatorsPage } from './pages/Calculators';
 import { AboutPage } from './pages/About';
 import {
@@ -138,7 +139,8 @@ export default function App() {
           <Route path="/calculators/variance" element={<VariancePage />} />
           <Route path="/calculators/z-score" element={<ZScorePage />} />
           <Route path="/calculators/confidence-interval" element={<ConfidenceIntervalPage />} />
-          <Route path="/calculators/correlation" element={<CorrelationPage />} />
+                    <Route path="/stat-analyzer" element={<StatAnalyzerPage />} />
+
 
           {/* Social Science & Decision */}
           <Route path="/calculators/risk-matrix" element={<RiskMatrixPage />} />

@@ -5,7 +5,7 @@ import { Menu, X, Calculator } from 'lucide-react';
 const navLinks = [
   { label: 'Home', path: '/' },
   { label: 'Calculators', path: '/calculators' },
-  { label: 'Research Toolkit', path: '/research-toolkit' },
+  { label: 'StatAnalyzer Pro', path: '/stat-analyzer', badge: 'Beta' },
   { label: 'Statistics', path: '/categories/statistics' },
   { label: 'Social Science', path: '/categories/social-science-decision' },
   { label: 'Future Tools', path: '/future-tools' },
