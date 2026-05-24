@@ -249,6 +249,71 @@ export const cybersecurityCalculators: CyberCalculatorConfig[] = [
       };
     },
   },
+  {
+    id: 'cvss-score',
+    title: 'CVSS 3.1 Base Score Calculator',
+    explanation: 'Calculate the CVSS 3.1 base vulnerability severity score from exploitability and impact metrics.',
+    formula: 'Base = Roundup(min(Impact + Exploitability, 10))',
+    fields: [
+      { key: 'av', label: 'Attack Vector', type: 'select', options: [{ label: 'Network (N)', value: '0.85' }, { label: 'Adjacent (A)', value: '0.62' }, { label: 'Local (L)', value: '0.55' }, { label: 'Physical (P)', value: '0.2' }] },
+      { key: 'ac', label: 'Attack Complexity', type: 'select', options: [{ label: 'Low (L)', value: '0.77' }, { label: 'High (H)', value: '0.44' }] },
+      { key: 'scope', label: 'Scope', type: 'select', options: [{ label: 'Unchanged (U)', value: 'U' }, { label: 'Changed (C)', value: 'C' }] },
+      { key: 'pr', label: 'Privileges Required', type: 'select', options: [{ label: 'None (N)', value: 'none' }, { label: 'Low (L)', value: 'low' }, { label: 'High (H)', value: 'high' }] },
+      { key: 'ui', label: 'User Interaction', type: 'select', options: [{ label: 'None (N)', value: '0.85' }, { label: 'Required (R)', value: '0.62' }] },
+      { key: 'ci', label: 'Confidentiality Impact', type: 'select', options: [{ label: 'None (N)', value: '0' }, { label: 'Low (L)', value: '0.22' }, { label: 'High (H)', value: '0.56' }] },
+      { key: 'ii', label: 'Integrity Impact', type: 'select', options: [{ label: 'None (N)', value: '0' }, { label: 'Low (L)', value: '0.22' }, { label: 'High (H)', value: '0.56' }] },
+      { key: 'ai', label: 'Availability Impact', type: 'select', options: [{ label: 'None (N)', value: '0' }, { label: 'Low (L)', value: '0.22' }, { label: 'High (H)', value: '0.56' }] },
+    ],
+    example: { av: '0.85', ac: '0.77', scope: 'U', pr: 'none', ui: '0.85', ci: '0.56', ii: '0.56', ai: '0.56' },
+    related: ['cyber-risk-score', 'incident-severity'],
+    tags: ['cvss', 'vulnerability', 'cybersecurity', 'risk scoring', 'severity'],
+    calculate: values => {
+      const av = num(values, 'av'), ac = num(values, 'ac'), ui = num(values, 'ui');
+      const scope = values.scope || 'U';
+      const prMap: Record<string, [number, number]> = { none: [0.85, 0.85], low: [0.62, 0.50], high: [0.27, 0.08] };
+      const pr = (prMap[values.pr || 'none'] ?? prMap.none)[scope === 'U' ? 0 : 1];
+      const ci = num(values, 'ci'), ii = num(values, 'ii'), ai = num(values, 'ai');
+      const iss = 1 - (1 - ci) * (1 - ii) * (1 - ai);
+      const exploit = 8.22 * av * ac * pr * ui;
+      let impact: number;
+      if (scope === 'U') {
+        impact = 6.42 * iss;
+      } else {
+        impact = 7.52 * (iss - 0.029) - 3.25 * Math.pow(iss - 0.02, 15);
+      }
+      let base: number;
+      if (impact <= 0) {
+        base = 0;
+      } else if (scope === 'U') {
+        base = Math.ceil(Math.min(impact + exploit, 10) * 10) / 10;
+      } else {
+        base = Math.ceil(Math.min(1.08 * (impact + exploit), 10) * 10) / 10;
+      }
+      const severity = base === 0 ? 'None' : base < 4 ? 'Low' : base < 7 ? 'Medium' : base < 9 ? 'High' : 'Critical';
+      const remediation = severity === 'Critical' || severity === 'High' ? 'Prioritise immediate remediation.' : severity === 'Medium' ? 'Schedule remediation within 30 days.' : 'Address in routine maintenance cycle.';
+      const avLabel = av === 0.85 ? 'Network' : av === 0.62 ? 'Adjacent' : av === 0.55 ? 'Local' : 'Physical';
+      return {
+        summary: [
+          { label: 'CVSS 3.1 Base Score', value: base.toFixed(1), highlight: true },
+          { label: 'Severity', value: severity },
+          { label: 'Impact Subscore', value: impact.toFixed(2) },
+          { label: 'Exploitability Subscore', value: exploit.toFixed(2) },
+        ],
+        interpretation: `CVSS 3.1 Base Score ${base.toFixed(1)} — ${severity}. ${remediation}`,
+        steps: [
+          `ISS = 1 − (1−${ci})(1−${ii})(1−${ai}) = ${iss.toFixed(4)}`,
+          scope === 'U'
+            ? `Impact (Scope Unchanged) = 6.42 × ${iss.toFixed(4)} = ${impact.toFixed(4)}`
+            : `Impact (Scope Changed) = 7.52×(ISS−0.029) − 3.25×(ISS−0.02)^15 = ${impact.toFixed(4)}`,
+          `Exploitability = 8.22 × ${av} × ${ac} × ${pr} × ${ui} = ${exploit.toFixed(4)}`,
+          scope === 'U'
+            ? `Base = Roundup(min(${impact.toFixed(2)} + ${exploit.toFixed(2)}, 10)) = ${base.toFixed(1)}`
+            : `Base = Roundup(min(1.08 × (${impact.toFixed(2)} + ${exploit.toFixed(2)}), 10)) = ${base.toFixed(1)}`,
+        ],
+        academicText: `CVSS 3.1 Base Score: ${base.toFixed(1)} (${severity}). Attack Vector: ${avLabel}, Scope: ${scope === 'U' ? 'Unchanged' : 'Changed'}, Impact Subscore: ${impact.toFixed(2)}, Exploitability Subscore: ${exploit.toFixed(2)}.`,
+      };
+    },
+  },
 ];
 
 export function getCybersecurityCalculator(idOrSlug?: string) {

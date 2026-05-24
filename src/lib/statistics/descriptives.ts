@@ -1,4 +1,5 @@
 import { jStat } from 'jstat';
+import type { CsvRow } from './types';
 
 export interface DescriptiveResult {
   variable: string;
@@ -14,7 +15,7 @@ export interface DescriptiveResult {
 /**
  * Compute descriptive statistics for a numeric variable.
  */
-export function descriptives(data: Record<string, any>[], variable: string): DescriptiveResult {
+export function descriptives(data: CsvRow[], variable: string): DescriptiveResult {
   const values = data.map(row => row[variable]).filter(v => v != null && v !== '');
   const numeric = values.filter(v => typeof v === 'number') as number[];
   const count = values.length;

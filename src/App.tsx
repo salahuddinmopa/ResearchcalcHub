@@ -139,6 +139,7 @@ export default function App() {
           <Route path="/calculators/variance" element={<VariancePage />} />
           <Route path="/calculators/z-score" element={<ZScorePage />} />
           <Route path="/calculators/confidence-interval" element={<ConfidenceIntervalPage />} />
+          <Route path="/calculators/correlation" element={<CorrelationPage />} />
                     <Route path="/stat-analyzer" element={<StatAnalyzerPage />} />
 
 

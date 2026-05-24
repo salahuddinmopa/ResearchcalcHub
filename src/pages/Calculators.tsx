@@ -4,10 +4,10 @@ import { Filter, SearchX } from 'lucide-react';
 import { calculators, categories, searchCalculators } from '../data/calculators';
 import { CalculatorCard } from '../components/ui/CalculatorCard';
 import { SearchBar } from '../components/ui/SearchBar';
-import type { Calculator, CalculatorStatus, Difficulty, UserType } from '../types';
+import type { Calculator, Difficulty, UserType } from '../types';
 import { useSEO } from '../utils/seo';
 
-type StatusFilter = CalculatorStatus | '';
+type StatusFilter = 'active' | '';
 
 const activeSections = [
   {
@@ -100,8 +100,7 @@ export function CalculatorsPage() {
   const [selectedStatus, setSelectedStatus] = useState<StatusFilter>('');
   const [showFilters, setShowFilters] = useState(false);
 
-  const activeCount = calculators.filter(calculator => calculator.status === 'active').length;
-  const comingSoonCount = calculators.filter(calculator => calculator.status === 'coming-soon').length;
+  const activeCount = calculators.length;
 
   const handleSearch = (value: string) => {
     setSearch(value);
@@ -151,17 +150,13 @@ export function CalculatorsPage() {
               <span className="badge bg-indigo-100 text-indigo-700 mb-3">Smart Calculator Finder</span>
               <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">All Calculators</h1>
               <p className="text-slate-600">
-                Search {calculators.length} tools: {activeCount} active calculators and {comingSoonCount} planned calculators.
+                {activeCount} calculators across research methods, statistics, STEM, finance, education, and more.
               </p>
             </div>
-            <div className="grid grid-cols-2 gap-3 sm:flex">
+            <div className="grid grid-cols-1 gap-3 sm:flex">
               <div className="rounded-2xl bg-slate-50 border border-slate-100 px-4 py-3">
                 <div className="text-xl font-bold text-slate-900">{activeCount}</div>
-                <div className="text-xs text-slate-500">Active</div>
-              </div>
-              <div className="rounded-2xl bg-slate-50 border border-slate-100 px-4 py-3">
-                <div className="text-xl font-bold text-slate-900">{comingSoonCount}</div>
-                <div className="text-xs text-slate-500">Coming soon</div>
+                <div className="text-xs text-slate-500">Calculators</div>
               </div>
             </div>
           </div>
@@ -261,7 +256,6 @@ export function CalculatorsPage() {
                     {([
                       { value: '', label: 'All' },
                       { value: 'active', label: 'Active' },
-                      { value: 'coming-soon', label: 'Coming Soon' },
                     ] as const).map(status => (
                       <button
                         key={status.label}

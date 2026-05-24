@@ -1,5 +1,3 @@
-import jsPDF from 'jspdf';
-
 interface PDFResult {
   label: string;
   value: string;
@@ -12,14 +10,15 @@ interface PDFReportOptions {
   disclaimer?: string;
 }
 
-export function downloadResultAsPDF(
+export async function downloadResultAsPDF(
   calculatorName: string,
   results: PDFResult[],
   interpretation: string,
   academicText: string,
   steps: string[],
   options: PDFReportOptions = {}
-): void {
+): Promise<void> {
+  const { default: jsPDF } = await import('jspdf');
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   const margin = 20;

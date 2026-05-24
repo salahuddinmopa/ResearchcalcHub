@@ -1,8 +1,5 @@
-// src/pages/tools/QualitativeThematicAnalysis.tsx
 import { useState, useEffect, Suspense } from 'react';
-// @ts-ignore
-import { saveAs } from 'file-saver'; // for exporting files (PDF/CSV)
-// @ts-ignore
+import { saveAs } from 'file-saver';
 import { jsPDF } from 'jspdf';
 import { generateWordFrequencies, summarizeText, generateInitialCodes } from '../../utils/qualitativeAnalysis';
 import { UploadSection } from "../../components/research/qualitative/UploadSection";
@@ -292,13 +289,13 @@ const exportReport = () => {
                 <button
                   onClick={() => {
                     if (!newCategoryName) return;
-                    const newCat = {
+                    const newCat: Category = {
                       name: newCategoryName,
                       description: newCategoryDesc,
                       codes: [],
                       frequency: 0,
-                      exampleQuote: ''
-                    } as any;
+                      exampleQuote: '',
+                    };
                     setCategories([...categories, newCat]);
                     setNewCategoryName('');
                     setNewCategoryDesc('');
@@ -395,7 +392,7 @@ const exportReport = () => {
               />
               <select
                 value={newThemeStrength}
-                onChange={e => setNewThemeStrength(e.target.value as any)}
+                onChange={e => setNewThemeStrength(e.target.value as Theme['strength'])}
                 className="p-2 border rounded"
               >
                 <option value="Weak">Weak</option>
@@ -405,13 +402,13 @@ const exportReport = () => {
               <button
                 onClick={() => {
                   if (!newThemeName) return;
-                  const newTheme = {
+                  const newTheme: Theme = {
                     name: newThemeName,
                     description: newThemeDesc,
                     categories: [],
                     strength: newThemeStrength,
-                    evidenceQuotes: []
-                  } as any;
+                    evidenceQuotes: [],
+                  };
                   setThemes([...themes, newTheme]);
                   setNewThemeName('');
                   setNewThemeDesc('');

@@ -6,6 +6,7 @@ const navLinks = [
   { label: 'Home', path: '/' },
   { label: 'Calculators', path: '/calculators' },
   { label: 'StatAnalyzer Pro', path: '/stat-analyzer', badge: 'Beta' },
+  { label: 'Research Toolkit', path: '/research-toolkit' },
   { label: 'Statistics', path: '/categories/statistics' },
   { label: 'Social Science', path: '/categories/social-science-decision' },
   { label: 'Future Tools', path: '/future-tools' },
@@ -40,13 +41,18 @@ export function Navbar() {
               <Link
                 key={link.path}
                 to={link.path}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
                   isActive(link.path)
                     ? 'bg-indigo-50 text-indigo-700'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                 }`}
               >
                 {link.label}
+                {link.badge && (
+                  <span className="text-[10px] font-bold uppercase tracking-wide bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded-full">
+                    {link.badge}
+                  </span>
+                )}
               </Link>
             ))}
           </div>
@@ -78,13 +84,18 @@ export function Navbar() {
                 key={link.path}
                 to={link.path}
                 onClick={() => setMobileOpen(false)}
-                className={`block px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                   isActive(link.path)
                     ? 'bg-indigo-50 text-indigo-700'
                     : 'text-slate-600 hover:bg-slate-50'
                 }`}
               >
                 {link.label}
+                {link.badge && (
+                  <span className="text-[10px] font-bold uppercase tracking-wide bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded-full">
+                    {link.badge}
+                  </span>
+                )}
               </Link>
             ))}
             <div className="pt-2 pb-1 px-2">

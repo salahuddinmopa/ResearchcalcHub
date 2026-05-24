@@ -24,7 +24,7 @@ export default function Step5Themes({ themes, setThemes, categories }: Props) {
     relatedCategories: [] as string[],
     supportingCodes: [] as string[],
     supportingQuote: '',
-    strength: 'Moderate' as const,
+    strength: 'Moderate' as Theme['strength'],
   });
 
   const addTheme = () => {
@@ -95,7 +95,7 @@ export default function Step5Themes({ themes, setThemes, categories }: Props) {
         <select
           className="w-full mb-2 p-2 border rounded"
           value={newTheme.strength}
-          onChange={(e) => setNewTheme({ ...newTheme, strength: e.target.value as any })}
+          onChange={(e) => setNewTheme({ ...newTheme, strength: e.target.value as Theme['strength'] })}
         >
           <option value="Weak">Weak</option>
           <option value="Moderate">Moderate</option>

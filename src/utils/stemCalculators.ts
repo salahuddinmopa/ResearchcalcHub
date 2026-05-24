@@ -175,6 +175,27 @@ export const stemCalculators: StemCalculatorConfig[] = [
     },
   },
   {
+    id: 'algebra-solver',
+    title: 'Algebra Equation Solver',
+    category: 'math',
+    explanation: 'Solve linear equations of the form ax + b = c for x.',
+    formula: 'x = (c − b) / a',
+    fields: [{ key: 'a', label: 'Coefficient a' }, { key: 'b', label: 'Constant b' }, { key: 'c', label: 'Right-hand side c' }],
+    example: { a: '3', b: '5', c: '20' },
+    related: ['quadratic-equation', 'percentage-calculator'],
+    calculate: values => {
+      const a = num(values, 'a'), b = num(values, 'b'), c = num(values, 'c');
+      if (a === 0) throw new Error('Coefficient a cannot be 0 — equation is not linear.');
+      const x = (c - b) / a;
+      return {
+        summary: [{ label: 'x', value: round(x), highlight: true }],
+        interpretation: `The solution is x = ${round(x)}.`,
+        steps: [`ax + b = c`, `${a}x + ${b} = ${c}`, `${a}x = ${c} − ${b} = ${round(c - b)}`, `x = ${round(c - b)} / ${a} = ${round(x)}`],
+        academicText: `Solving ${a}x + ${b} = ${c} gives x = ${round(x)}.`,
+      };
+    },
+  },
+  {
     id: 'quadratic-equation',
     title: 'Quadratic Equation Calculator',
     category: 'math',
@@ -363,6 +384,120 @@ export const stemCalculators: StemCalculatorConfig[] = [
     example: { moles: '1', temperature: '273.15', volume: '22.4' },
     related: ['mole-calculator', 'concentration-calculator'],
     calculate: values => { const n = num(values, 'moles'), t = num(values, 'temperature'), v = num(values, 'volume'); positive(v, 'Volume'); const r = 0.082057; const p = n * r * t / v; return { summary: [{ label: 'Pressure', value: `${round(p)} atm`, highlight: true }], interpretation: `Gas pressure is ${round(p)} atm.`, steps: [`P = (${n} x ${r} x ${t}) / ${v} = ${round(p)} atm`], academicText: `Using the ideal gas law, pressure was calculated as ${round(p)} atm.` }; },
+  },
+  {
+    id: 'matrix-calculator',
+    title: '2×2 Matrix Calculator',
+    category: 'math',
+    explanation: 'Compute determinant, trace, inverse, and transpose of a 2×2 matrix.',
+    formula: 'det(A) = ad − bc  |  A⁻¹ = (1/det) × [[d, −b], [−c, a]]',
+    fields: [
+      { key: 'a', label: 'a (row 1, col 1)' },
+      { key: 'b', label: 'b (row 1, col 2)' },
+      { key: 'c', label: 'c (row 2, col 1)' },
+      { key: 'd', label: 'd (row 2, col 2)' },
+    ],
+    example: { a: '3', b: '1', c: '5', d: '2' },
+    related: ['percentage-calculator', 'derivative-calculator'],
+    calculate: values => {
+      const a = num(values, 'a'), b = num(values, 'b'), c = num(values, 'c'), d = num(values, 'd');
+      const det = a * d - b * c;
+      const trace = a + d;
+      const hasInverse = det !== 0;
+      const inv = hasInverse
+        ? `[[${round(d / det)}, ${round(-b / det)}], [${round(-c / det)}, ${round(a / det)}]]`
+        : 'Singular — no inverse';
+      return {
+        summary: [
+          { label: 'Determinant', value: round(det), highlight: true },
+          { label: 'Trace', value: round(trace) },
+          { label: 'Rank', value: det !== 0 ? '2' : (a !== 0 || b !== 0 || c !== 0 || d !== 0) ? '1' : '0' },
+          { label: 'Invertible', value: hasInverse ? 'Yes' : 'No (singular)' },
+          { label: 'Inverse', value: inv },
+          { label: 'Transpose', value: `[[${a}, ${c}], [${b}, ${d}]]` },
+        ],
+        interpretation: `det = ${round(det)}; trace = ${round(trace)}. ${hasInverse ? 'Matrix is invertible.' : 'Matrix is singular — no inverse exists.'}`,
+        steps: [
+          `Matrix A = [[${a}, ${b}], [${c}, ${d}]]`,
+          `det(A) = (${a})(${d}) − (${b})(${c}) = ${round(det)}`,
+          `trace(A) = ${a} + ${d} = ${round(trace)}`,
+          hasInverse
+            ? `A⁻¹ = (1/${round(det)}) × [[${d}, ${-b}], [${-c}, ${a}]] = ${inv}`
+            : 'det = 0 → singular matrix, inverse undefined',
+        ],
+        academicText: `For the 2×2 matrix [[${a}, ${b}], [${c}, ${d}]]: determinant = ${round(det)}, trace = ${round(trace)}, ${hasInverse ? `inverse = ${inv}` : 'no inverse (singular)'}.`,
+      };
+    },
+  },
+  {
+    id: 'derivative-calculator',
+    title: 'Polynomial Derivative Calculator',
+    category: 'math',
+    explanation: 'Differentiate a polynomial of up to four terms and evaluate the derivative at a given x.',
+    formula: 'd/dx(axⁿ) = anx^(n−1)',
+    fields: [
+      { key: 'a0', label: 'Term 1 coefficient' },
+      { key: 'n0', label: 'Term 1 exponent' },
+      { key: 'a1', label: 'Term 2 coefficient (optional)' },
+      { key: 'n1', label: 'Term 2 exponent (optional)' },
+      { key: 'a2', label: 'Term 3 coefficient (optional)' },
+      { key: 'n2', label: 'Term 3 exponent (optional)' },
+      { key: 'a3', label: 'Term 4 coefficient (optional)' },
+      { key: 'n3', label: 'Term 4 exponent (optional)' },
+      { key: 'xval', label: 'Evaluate at x' },
+    ],
+    example: { a0: '3', n0: '2', a1: '2', n1: '1', a2: '-5', n2: '0', a3: '', n3: '', xval: '4' },
+    related: ['matrix-calculator', 'percentage-calculator'],
+    calculate: values => {
+      type Term = { a: number; n: number };
+      const terms: Term[] = [];
+      for (let i = 0; i < 4; i++) {
+        const aRaw = String(values[`a${i}`] ?? '').trim();
+        const nRaw = String(values[`n${i}`] ?? '').trim();
+        if (aRaw === '' && nRaw === '') continue;
+        const a = Number(aRaw), n = Number(nRaw);
+        if (!Number.isFinite(a) || !Number.isFinite(n)) throw new Error(`Term ${i + 1}: enter valid numbers or leave both fields blank.`);
+        terms.push({ a, n });
+      }
+      if (terms.length === 0) throw new Error('Enter at least one term.');
+      const xRaw = String(values.xval ?? '').trim();
+      const evalAtX = xRaw !== '' && Number.isFinite(Number(xRaw));
+      const xval = evalAtX ? Number(xRaw) : 0;
+
+      const derivTerms = terms.map(({ a, n }) => ({ a: a * n, n: n - 1 })).filter(t => t.a !== 0);
+
+      function termStr(a: number, n: number, first: boolean): string {
+        if (n === 0) return (first ? '' : (a >= 0 ? ' + ' : ' − ')) + Math.abs(a).toString();
+        const coeff = Math.abs(a) === 1 ? '' : Math.abs(a).toString();
+        const xPart = n === 1 ? 'x' : `x^${n}`;
+        const sign = first ? (a < 0 ? '−' : '') : (a >= 0 ? ' + ' : ' − ');
+        return `${sign}${coeff}${xPart}`;
+      }
+
+      const originalStr = terms.map(({ a, n }, i) => termStr(a, n, i === 0)).join('') || '0';
+      const derivStr = derivTerms.map(({ a, n }, i) => termStr(a, n, i === 0)).join('') || '0';
+      const derivValue = derivTerms.reduce((sum, { a, n }) => sum + a * Math.pow(xval, n), 0);
+
+      return {
+        summary: [
+          { label: 'f(x)', value: originalStr, highlight: false },
+          { label: "f'(x)", value: derivStr, highlight: true },
+          ...(evalAtX ? [{ label: `f'(${xval})`, value: round(derivValue), highlight: false }] : []),
+        ],
+        interpretation: `The derivative of f(x) = ${originalStr} is f'(x) = ${derivStr}.${evalAtX ? ` At x = ${xval}, f'(${xval}) = ${round(derivValue)}.` : ''}`,
+        steps: [
+          `f(x) = ${originalStr}`,
+          ...terms.map(({ a, n }) =>
+            n === 0
+              ? `d/dx(${a}) = 0`
+              : `d/dx(${a}x^${n}) = ${a * n}x^${n - 1}`
+          ),
+          `f'(x) = ${derivStr}`,
+          ...(evalAtX ? [`f'(${xval}) = ${derivStr.replace(/x\^(\d+)/g, (_, e) => `(${xval})^${e}`).replace(/x/g, `(${xval})`)} = ${round(derivValue)}`] : []),
+        ],
+        academicText: `Given f(x) = ${originalStr}, the derivative by the power rule is f'(x) = ${derivStr}.${evalAtX ? ` Evaluated at x = ${xval}: f'(${xval}) = ${round(derivValue)}.` : ''}`,
+      };
+    },
   },
 ];
 

@@ -182,6 +182,279 @@ export const practicalCalculators: PracticalCalculatorConfig[] = [
     },
   },
   {
+    id: 'loan-repayment',
+    title: 'Loan Repayment Calculator',
+    category: 'finance',
+    explanation: 'Estimate monthly repayments and total interest for a loan using amortisation.',
+    formula: 'Payment = P × r(1+r)^n / ((1+r)^n − 1)',
+    fields: [
+      { key: 'principal', label: 'Loan Amount', unit: '$' },
+      { key: 'rate', label: 'Annual Interest Rate', unit: '%' },
+      { key: 'years', label: 'Loan Term', unit: 'years' },
+    ],
+    example: { principal: '20000', rate: '6.5', years: '4' },
+    related: ['loan-calculator', 'compound-interest', 'npv-calculator'],
+    tags: ['loan', 'repayment', 'amortisation', 'monthly payment', 'interest'],
+    calculate: values => {
+      const p = num(values, 'principal'), annual = num(values, 'rate'), years = num(values, 'years');
+      positive(p, 'Loan amount'); positive(years, 'Loan term');
+      const n = Math.round(years * 12), r = annual / 100 / 12;
+      const payment = r === 0 ? p / n : p * r * (1 + r) ** n / ((1 + r) ** n - 1);
+      const totalPaid = payment * n, totalInterest = totalPaid - p;
+      const interestPct = totalInterest / p * 100;
+      return {
+        summary: [
+          { label: 'Monthly Payment', value: money(payment), highlight: true },
+          { label: 'Total Paid', value: money(totalPaid) },
+          { label: 'Total Interest', value: money(totalInterest) },
+          { label: 'Interest as % of Principal', value: pct(interestPct) },
+        ],
+        interpretation: `Monthly repayment is ${money(payment)}, with ${money(totalInterest)} paid in interest over ${n} months.`,
+        steps: [
+          `Monthly rate r = ${annual}% / 12 = ${round(r * 100, 4)}%`,
+          `Payments n = ${years} × 12 = ${n}`,
+          `Payment = ${p} × ${round(r, 6)} × (1 + ${round(r, 6)})^${n} / ((1 + ${round(r, 6)})^${n} − 1)`,
+          `Payment = ${money(payment)}`,
+          `Total paid = ${money(payment)} × ${n} = ${money(totalPaid)}`,
+          `Total interest = ${money(totalPaid)} − ${money(p)} = ${money(totalInterest)}`,
+        ],
+        academicText: `A loan of ${money(p)} at ${round(annual, 2)}% p.a. over ${years} year(s) requires monthly repayments of ${money(payment)}, with total interest of ${money(totalInterest)}.`,
+      };
+    },
+  },
+  {
+    id: 'npv-calculator',
+    title: 'Net Present Value Calculator',
+    category: 'finance',
+    explanation: 'Calculate NPV by discounting future cash flows back to the present.',
+    formula: 'NPV = Σ Ct / (1 + r)^t − C₀',
+    fields: [
+      { key: 'initial', label: 'Initial Investment', unit: '$' },
+      { key: 'rate', label: 'Discount Rate', unit: '%' },
+      { key: 'cf1', label: 'Cash Flow Year 1', unit: '$' },
+      { key: 'cf2', label: 'Cash Flow Year 2', unit: '$' },
+      { key: 'cf3', label: 'Cash Flow Year 3', unit: '$' },
+      { key: 'cf4', label: 'Cash Flow Year 4 (optional)', unit: '$' },
+      { key: 'cf5', label: 'Cash Flow Year 5 (optional)', unit: '$' },
+    ],
+    example: { initial: '10000', rate: '8', cf1: '3000', cf2: '4000', cf3: '5000', cf4: '', cf5: '' },
+    related: ['roi-calculator', 'compound-interest', 'loan-repayment'],
+    tags: ['npv', 'net present value', 'discounted cash flow', 'investment', 'finance'],
+    calculate: values => {
+      const c0 = num(values, 'initial'), r = num(values, 'rate') / 100;
+      positive(c0, 'Initial investment');
+      const cfs = [values.cf1, values.cf2, values.cf3, values.cf4, values.cf5]
+        .map((v, i) => ({ t: i + 1, v: v?.trim() }))
+        .filter(x => x.v !== '' && x.v !== undefined)
+        .map(x => ({ t: x.t, cf: Number(x.v) }));
+      if (cfs.length === 0 || cfs.some(x => !Number.isFinite(x.cf))) throw new Error('Enter at least one valid cash flow.');
+      const pvs = cfs.map(({ t, cf }) => ({ t, cf, pv: cf / (1 + r) ** t }));
+      const totalPV = pvs.reduce((s, x) => s + x.pv, 0);
+      const npv = totalPV - c0;
+      return {
+        summary: [
+          { label: 'NPV', value: money(npv), highlight: true },
+          { label: 'Total PV of Cash Flows', value: money(totalPV) },
+          { label: 'Decision', value: npv >= 0 ? 'Accept (NPV ≥ 0)' : 'Reject (NPV < 0)' },
+        ],
+        interpretation: npv >= 0
+          ? `NPV is ${money(npv)}, suggesting the investment adds value at the given discount rate.`
+          : `NPV is ${money(npv)}, suggesting the investment destroys value at the given discount rate.`,
+        steps: [
+          ...pvs.map(({ t, cf, pv }) => `PV Year ${t} = ${money(cf)} / (1 + ${r})^${t} = ${money(pv)}`),
+          `Total PV = ${money(totalPV)}`,
+          `NPV = ${money(totalPV)} − ${money(c0)} = ${money(npv)}`,
+        ],
+        academicText: `The net present value at a ${round(r * 100, 2)}% discount rate is ${money(npv)}, indicating the project ${npv >= 0 ? 'creates' : 'destroys'} value.`,
+      };
+    },
+  },
+  {
+    id: 'relative-risk',
+    title: 'Relative Risk Calculator',
+    category: 'biology',
+    explanation: 'Estimate relative risk and number needed to treat from a 2×2 contingency table.',
+    formula: 'RR = [a/(a+b)] / [c/(c+d)]',
+    fields: [
+      { key: 'a', label: 'Exposed & Outcome (a)' },
+      { key: 'b', label: 'Exposed & No Outcome (b)' },
+      { key: 'c', label: 'Unexposed & Outcome (c)' },
+      { key: 'd', label: 'Unexposed & No Outcome (d)' },
+    ],
+    example: { a: '30', b: '70', c: '10', d: '90' },
+    related: ['hardy-weinberg', 'bmi-calculator'],
+    tags: ['relative risk', 'epidemiology', 'NNT', 'odds ratio', 'public health', '2x2 table'],
+    calculate: values => {
+      const a = num(values, 'a'), b = num(values, 'b'), c = num(values, 'c'), d = num(values, 'd');
+      if ([a, b, c, d].some(v => v < 0)) throw new Error('Cell counts cannot be negative.');
+      const exposed = a + b, unexposed = c + d;
+      positive(exposed, 'Exposed group total'); positive(unexposed, 'Unexposed group total');
+      const rExp = a / exposed, rUnexp = c / unexposed;
+      if (rUnexp === 0) throw new Error('Unexposed risk is zero — RR undefined.');
+      const rr = rExp / rUnexp;
+      const arr = Math.abs(rExp - rUnexp);
+      const nnt = arr === 0 ? Infinity : 1 / arr;
+      const rrLabel = rr > 1 ? 'Increased risk in exposed group.' : rr < 1 ? 'Decreased risk (protective).' : 'No difference in risk.';
+      return {
+        summary: [
+          { label: 'Relative Risk (RR)', value: round(rr, 4), highlight: true },
+          { label: 'Risk (Exposed)', value: pct(rExp * 100) },
+          { label: 'Risk (Unexposed)', value: pct(rUnexp * 100) },
+          { label: 'Absolute Risk Reduction', value: pct(arr * 100) },
+          { label: 'Number Needed to Treat', value: nnt === Infinity ? '∞' : round(nnt, 1) },
+        ],
+        interpretation: `RR = ${round(rr, 4)}. ${rrLabel}`,
+        steps: [
+          `Risk (exposed) = ${a} / (${a} + ${b}) = ${pct(rExp * 100)}`,
+          `Risk (unexposed) = ${c} / (${c} + ${d}) = ${pct(rUnexp * 100)}`,
+          `RR = ${pct(rExp * 100)} / ${pct(rUnexp * 100)} = ${round(rr, 4)}`,
+          `ARR = |${pct(rExp * 100)} − ${pct(rUnexp * 100)}| = ${pct(arr * 100)}`,
+          `NNT = 1 / ${pct(arr * 100)} = ${nnt === Infinity ? '∞' : round(nnt, 1)}`,
+        ],
+        academicText: `The relative risk was ${round(rr, 4)} (exposed risk ${pct(rExp * 100)}, unexposed risk ${pct(rUnexp * 100)}), with an absolute risk reduction of ${pct(arr * 100)} and NNT of ${nnt === Infinity ? '∞' : round(nnt, 1)}.`,
+      };
+    },
+  },
+  {
+    id: 'hardy-weinberg',
+    title: 'Hardy-Weinberg Calculator',
+    category: 'biology',
+    explanation: 'Calculate allele and genotype frequencies under Hardy-Weinberg equilibrium.',
+    formula: 'p + q = 1  |  p² + 2pq + q² = 1',
+    fields: [
+      {
+        key: 'input', label: 'Known Frequency', type: 'select',
+        options: [{ label: 'Recessive allele (q)', value: 'q' }, { label: 'Dominant allele (p)', value: 'p' }, { label: 'Recessive homozygotes (q²)', value: 'q2' }],
+      },
+      { key: 'value', label: 'Frequency Value (0 – 1)' },
+    ],
+    example: { input: 'q', value: '0.3' },
+    related: ['relative-risk', 'bmi-calculator'],
+    tags: ['hardy weinberg', 'allele frequency', 'genotype', 'genetics', 'biology'],
+    calculate: values => {
+      const type = values.input as string || 'q';
+      const val = num(values, 'value');
+      if (val < 0 || val > 1) throw new Error('Frequency must be between 0 and 1.');
+      let q: number, p: number;
+      if (type === 'q') { q = val; p = 1 - q; }
+      else if (type === 'p') { p = val; q = 1 - p; }
+      else { q = Math.sqrt(val); p = 1 - q; }
+      const p2 = p * p, pq2 = 2 * p * q, q2 = q * q;
+      return {
+        summary: [
+          { label: 'Dominant allele frequency (p)', value: round(p, 4) },
+          { label: 'Recessive allele frequency (q)', value: round(q, 4), highlight: true },
+          { label: 'Homozygous dominant (p²)', value: pct(p2 * 100) },
+          { label: 'Heterozygous (2pq)', value: pct(pq2 * 100) },
+          { label: 'Homozygous recessive (q²)', value: pct(q2 * 100) },
+        ],
+        interpretation: `At equilibrium: ${pct(p2 * 100)} homozygous dominant, ${pct(pq2 * 100)} heterozygous, ${pct(q2 * 100)} homozygous recessive.`,
+        steps: [
+          `q = ${round(q, 4)}, p = 1 − q = ${round(p, 4)}`,
+          `p² = ${round(p, 4)}² = ${pct(p2 * 100)}`,
+          `2pq = 2 × ${round(p, 4)} × ${round(q, 4)} = ${pct(pq2 * 100)}`,
+          `q² = ${round(q, 4)}² = ${pct(q2 * 100)}`,
+          `Check: ${pct(p2 * 100)} + ${pct(pq2 * 100)} + ${pct(q2 * 100)} = 100%`,
+        ],
+        academicText: `Under Hardy-Weinberg equilibrium (p = ${round(p, 4)}, q = ${round(q, 4)}), expected genotype frequencies are: homozygous dominant ${pct(p2 * 100)}, heterozygous ${pct(pq2 * 100)}, homozygous recessive ${pct(q2 * 100)}.`,
+      };
+    },
+  },
+  {
+    id: 'password-entropy',
+    title: 'Password Entropy Calculator',
+    category: 'everyday',
+    explanation: 'Estimate the information entropy of a password to assess its theoretical strength.',
+    formula: 'H = L × log₂(C)',
+    fields: [
+      { key: 'length', label: 'Password Length', unit: 'characters' },
+      {
+        key: 'charset', label: 'Character Set', type: 'select',
+        options: [
+          { label: 'Lowercase only (26)', value: '26' },
+          { label: 'Mixed case (52)', value: '52' },
+          { label: 'Alphanumeric (62)', value: '62' },
+          { label: 'Alphanumeric + symbols (94)', value: '94' },
+          { label: 'Full ASCII printable (128)', value: '128' },
+        ],
+      },
+    ],
+    example: { length: '12', charset: '94' },
+    related: ['discount-calculator', 'percentage-calculator'],
+    tags: ['password', 'entropy', 'security', 'strength', 'bits'],
+    calculate: values => {
+      const L = num(values, 'length'), C = num(values, 'charset');
+      positive(L, 'Password length');
+      const H = L * Math.log2(C);
+      const strength = H < 40 ? 'Very Weak' : H < 60 ? 'Weak' : H < 80 ? 'Moderate' : H < 100 ? 'Strong' : 'Very Strong';
+      const crackTime = H < 40 ? 'seconds to minutes' : H < 60 ? 'hours to days' : H < 80 ? 'months to years' : H < 100 ? 'decades' : 'centuries or more (at 10¹² guesses/sec)';
+      return {
+        summary: [
+          { label: 'Entropy', value: `${round(H, 1)} bits`, highlight: true },
+          { label: 'Strength', value: strength },
+          { label: 'Estimated Crack Time', value: crackTime },
+          { label: 'Possible Combinations', value: `${C}^${L}` },
+        ],
+        interpretation: `A ${L}-character password from a pool of ${C} characters has ${round(H, 1)} bits of entropy — rated ${strength}.`,
+        steps: [
+          `H = L × log₂(C) = ${L} × log₂(${C})`,
+          `H = ${L} × ${round(Math.log2(C), 4)} = ${round(H, 2)} bits`,
+        ],
+        academicText: `Password entropy was estimated as ${round(H, 1)} bits using H = L × log₂(C) where L = ${L} and C = ${C}.`,
+      };
+    },
+  },
+  {
+    id: 'effect-size-education',
+    title: 'Education Effect Size Calculator',
+    category: 'education',
+    explanation: "Calculate Cohen's d and Hedge's g to quantify the practical significance of an educational intervention.",
+    formula: "d = (M₁ − M₂) / SD_pooled  |  g = d × J",
+    fields: [
+      { key: 'm1', label: 'Treatment Mean (M₁)' },
+      { key: 'sd1', label: 'Treatment SD (SD₁)' },
+      { key: 'n1', label: 'Treatment Sample Size (n₁)' },
+      { key: 'm2', label: 'Control Mean (M₂)' },
+      { key: 'sd2', label: 'Control SD (SD₂)' },
+      { key: 'n2', label: 'Control Sample Size (n₂)' },
+    ],
+    example: { m1: '75', sd1: '10', n1: '30', m2: '65', sd2: '12', n2: '30' },
+    related: ['exam-percentage', 'grade-calculator', 'gpa-calculator'],
+    tags: ['effect size', "cohen's d", "hedge's g", 'education research', 'intervention', 'learning outcomes'],
+    calculate: values => {
+      const m1 = num(values, 'm1'), sd1 = num(values, 'sd1'), n1 = num(values, 'n1');
+      const m2 = num(values, 'm2'), sd2 = num(values, 'sd2'), n2 = num(values, 'n2');
+      positive(n1, 'Treatment n'); positive(n2, 'Control n'); positive(sd1, 'Treatment SD'); positive(sd2, 'Control SD');
+      if (n1 < 2 || n2 < 2) throw new Error('Sample sizes must be at least 2.');
+      const pooledVar = ((n1 - 1) * sd1 ** 2 + (n2 - 1) * sd2 ** 2) / (n1 + n2 - 2);
+      const pooledSD = Math.sqrt(pooledVar);
+      const d = (m1 - m2) / pooledSD;
+      const df = n1 + n2 - 2;
+      const J = 1 - 3 / (4 * df - 1);
+      const g = d * J;
+      const absd = Math.abs(d);
+      const cohenLabel = absd >= 0.8 ? 'large' : absd >= 0.5 ? 'medium' : absd >= 0.2 ? 'small' : 'negligible';
+      const hattieLabel = absd >= 1.0 ? 'very influential' : absd >= 0.6 ? 'desirable' : absd >= 0.4 ? 'positive influence' : absd >= 0.2 ? 'developmental' : 'small/negligible';
+      return {
+        summary: [
+          { label: "Cohen's d", value: round(d, 4), highlight: true },
+          { label: "Hedge's g (bias-corrected)", value: round(g, 4) },
+          { label: 'Pooled SD', value: round(pooledSD, 4) },
+          { label: "Cohen's benchmark", value: cohenLabel },
+          { label: "Hattie's influence", value: hattieLabel },
+        ],
+        interpretation: `Cohen's d = ${round(d, 4)} (${cohenLabel} effect). In educational terms, Hattie classifies this as a ${hattieLabel} effect.`,
+        steps: [
+          `SD_pooled = √(((${n1}−1)×${sd1}² + (${n2}−1)×${sd2}²) / (${n1}+${n2}−2)) = ${round(pooledSD, 4)}`,
+          `d = (${m1} − ${m2}) / ${round(pooledSD, 4)} = ${round(d, 4)}`,
+          `J = 1 − 3/(4×${df}−1) = ${round(J, 6)}`,
+          `g = ${round(d, 4)} × ${round(J, 6)} = ${round(g, 4)}`,
+        ],
+        academicText: `Cohen's d = ${round(d, 4)} (${cohenLabel}), Hedge's g = ${round(g, 4)} (bias-corrected), pooled SD = ${round(pooledSD, 4)}. Using Hattie's classification, this represents a ${hattieLabel} effect on learning outcomes.`,
+      };
+    },
+  },
+  {
     id: 'gpa-calculator',
     title: 'GPA Calculator',
     category: 'education',

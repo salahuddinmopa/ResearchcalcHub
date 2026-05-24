@@ -1,3 +1,5 @@
+import type { CsvRow } from './types';
+
 export interface FrequencyResult {
   variable: string;
   counts: Record<string, number>;
@@ -10,7 +12,7 @@ export interface FrequencyResult {
   mode?: string[];
 }
 
-export function frequencies(data: any[], variables: string[]): FrequencyResult[] {
+export function frequencies(data: CsvRow[], variables: string[]): FrequencyResult[] {
   return variables.map((v) => {
     const counts: Record<string, number> = {};
     const values: any[] = [];

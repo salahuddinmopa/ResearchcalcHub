@@ -10,7 +10,6 @@ import { InterpretationBox } from '../ui/InterpretationBox';
 import { AcademicReportBox } from '../ui/AcademicReportBox';
 import { ResultCard } from '../ui/ResultCard';
 import { CalculatorCard } from '../ui/CalculatorCard';
-import { downloadResultAsPDF } from '../../utils/pdf';
 import { copyToClipboard } from '../../utils/pdf';
 import { calculators } from '../../data/calculators';
 import { downloadCsv, resultToText, type CsvExport } from '../../utils/export';

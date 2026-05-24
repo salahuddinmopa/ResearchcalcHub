@@ -1,11 +1,12 @@
 import { jStat } from 'jstat';
+import type { CsvRow } from './types';
 
 /**
  * Compute Cronbach's Alpha for a set of items (variables) in the dataset.
  * Returns the alpha coefficient.
  */
 export function cronbachAlpha(
-  data: Record<string, any>[],
+  data: CsvRow[],
   variables: string[]
 ): number {
   if (variables.length === 0) return 0;

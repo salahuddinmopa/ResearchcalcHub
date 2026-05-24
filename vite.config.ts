@@ -8,7 +8,9 @@ export default defineConfig({
       output: {
         manualChunks: {
           chartjs: ['chart.js'],
-          react: ['react', 'react-dom']
+          react: ['react', 'react-dom', 'react-router-dom'],
+          recharts: ['recharts'],
+          jstat: ['jstat'],
         }
       }
     },
