@@ -1,4 +1,5 @@
 import QualitativeThematicAnalysisPage from './pages/calculators/QualitativeThematicAnalysisPage';
+import DataUploadPage from './pages/DataUploadPage';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { Navbar } from './components/layout/Navbar';
 import { Footer } from './components/layout/Footer';
@@ -111,6 +112,7 @@ export default function App() {
           <Route path="/calculators" element={<CalculatorsPage />} />
           <Route path="/categories/:categoryId" element={<CategoryPage />} />
           <Route path="/research-toolkit" element={<ResearchToolkitPage />} />
+          <Route path="/data-upload" element={<DataUploadPage />} />
           <Route path="/future-tools" element={<FutureToolsPage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/contact" element={<ContactPage />} />

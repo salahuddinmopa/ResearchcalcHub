@@ -23,6 +23,7 @@ export function Footer() {
           <div>
             <h4 className="text-white font-semibold text-sm mb-3">Research Tools</h4>
             <ul className="space-y-2 text-sm">
+              <li><Link to="/data-upload" className="hover:text-white transition-colors">Upload Data</Link></li>
               <li><Link to="/calculators?cat=research-methodology" className="hover:text-white transition-colors">Research Methodology</Link></li>
               <li><Link to="/calculators?cat=reliability-validity" className="hover:text-white transition-colors">Reliability & Validity</Link></li>
               <li><Link to="/calculators?cat=statistics" className="hover:text-white transition-colors">Statistics</Link></li>

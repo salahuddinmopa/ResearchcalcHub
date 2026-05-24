@@ -5,11 +5,11 @@ import { Menu, X, Calculator } from 'lucide-react';
 const navLinks = [
   { label: 'Home', path: '/' },
   { label: 'Calculators', path: '/calculators' },
+  { label: 'Upload Data', path: '/data-upload', badge: 'New' },
   { label: 'StatAnalyzer Pro', path: '/stat-analyzer', badge: 'Beta' },
   { label: 'Research Toolkit', path: '/research-toolkit' },
   { label: 'Statistics', path: '/categories/statistics' },
   { label: 'Social Science', path: '/categories/social-science-decision' },
-  { label: 'Future Tools', path: '/future-tools' },
   { label: 'About', path: '/about' },
 ];
 
