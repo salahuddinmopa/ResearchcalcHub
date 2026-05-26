@@ -1,4 +1,4 @@
-import { getCalculatorKnowledgeBase } from '../src/utils/chatKnowledge';
+import { getCalculatorKnowledgeBase } from './chatKnowledge';
 
 const CALCULATOR_KNOWLEDGE = getCalculatorKnowledgeBase();
 
