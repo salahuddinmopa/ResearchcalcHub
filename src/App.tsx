@@ -61,6 +61,7 @@ function ScrollToTop() {
 }
 
 import { Header } from './components/layout/Header';
+import { ChatWidget } from './components/chat/ChatWidget';
 
 function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -81,6 +82,7 @@ function Layout({ children }: { children: React.ReactNode }) {
       </div>
       <main className="flex-1">{children}</main>
       <Footer />
+      <ChatWidget />
     </div>
   );
 }
