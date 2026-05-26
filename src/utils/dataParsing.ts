@@ -1,5 +1,5 @@
 import Papa from 'papaparse';
-import * as XLSX from 'xlsx';
+import { readSheet as readXlsxSheet } from 'read-excel-file/browser';
 
 export interface ParsedDataset {
   headers: string[];
@@ -76,13 +76,13 @@ function parseTextFile(file: File): Promise<ParsedDataset> {
 }
 
 async function parseXLSXFile(file: File): Promise<ParsedDataset> {
-  const buf = await file.arrayBuffer();
-  const wb = XLSX.read(buf, { type: 'array' });
-  const ws = wb.Sheets[wb.SheetNames[0]];
-  const data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' }) as unknown[][];
+  const rawData = await readXlsxSheet(file);
+  const data = rawData.map((row: (string | number | boolean | typeof Date | null)[]) =>
+    row.map((cell: string | number | boolean | typeof Date | null) => (cell === null || cell === undefined) ? '' : String(cell))
+  );
   if (data.length < 2) throw new Error('Excel file needs at least a header row and one data row.');
-  const headers = deduplicateHeaders((data[0] as unknown[]).map(h => String(h).trim()));
-  const rows = toRows(headers, (data.slice(1) as unknown[][]).map(r => r.map(c => String(c))));
+  const headers = deduplicateHeaders(data[0].map((h: string) => h.trim()));
+  const rows = toRows(headers, data.slice(1));
   return { headers, rows, rowCount: rows.length, colCount: headers.length, source: 'file', fileName: file.name };
 }
 
