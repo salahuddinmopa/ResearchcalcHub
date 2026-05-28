@@ -8,6 +8,7 @@ const navLinks = [
   { label: 'Upload Data', path: '/data-upload', badge: 'New' },
   { label: 'StatAnalyzer Pro', path: '/stat-analyzer', badge: 'Beta' },
   { label: 'Research Toolkit', path: '/research-toolkit' },
+  { label: 'Research Planner', path: '/research-project-planner', badge: 'New' },
   { label: 'Statistics', path: '/categories/statistics' },
   { label: 'Social Science', path: '/categories/social-science-decision' },
   { label: 'About', path: '/about' },

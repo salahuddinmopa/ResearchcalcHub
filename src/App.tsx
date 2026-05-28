@@ -17,6 +17,7 @@ import {
 } from './pages/InfoPages';
 import { CategoryPage } from './pages/Category';
 import ResearchToolkitPage from './pages/ResearchToolkit';
+import ResearchProjectPlannerPage from './pages/ResearchProjectPlanner';
 
 import { FutureToolsPage } from './pages/FutureTools';
 import { PlaceholderCalculatorPage } from './pages/PlaceholderCalculator';
@@ -114,6 +115,7 @@ export default function App() {
           <Route path="/calculators" element={<CalculatorsPage />} />
           <Route path="/categories/:categoryId" element={<CategoryPage />} />
           <Route path="/research-toolkit" element={<ResearchToolkitPage />} />
+          <Route path="/research-project-planner" element={<ResearchProjectPlannerPage />} />
           <Route path="/data-upload" element={<DataUploadPage />} />
           <Route path="/future-tools" element={<FutureToolsPage />} />
           <Route path="/about" element={<AboutPage />} />
